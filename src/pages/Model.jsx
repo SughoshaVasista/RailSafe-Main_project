@@ -1,0 +1,8 @@
+import React from 'react'
+import Header from '../components/Header'
+import Panel from '../components/Panel'
+import Lamp from '../components/Lamp'
+import { EmptyState, ErrorState, LoadingState } from '../components/StateMessage'
+import { useModelStatus } from '../hooks/useData'
+const value = (item, keys) => keys.map((key) => item?.[key]).find((item) => item !== undefined && item !== null && item !== '') ?? 'NO DATA'
+export default function Model() { const state = useModelStatus(); const model = state.data || {}; return <><Header title="Model" text="Loaded model metadata and measured inference state." /><Panel title="Model status" status={state.loading ? 'Loading' : state.error ? 'Unavailable' : 'Measured'}>{state.loading ? <LoadingState>Loading model status...</LoadingState> : state.error ? <ErrorState /> : state.data ? <><div className="model-lamps"><Lamp severity={model.loaded ? 'clear' : 'missing_data'} label={model.loaded ? 'LOADED' : 'MISSING_DATA'} /><Lamp severity={model.inference_active ? 'clear' : 'missing_data'} label={model.inference_active ? 'INFERENCE_ACTIVE' : 'MISSING_DATA'} /></div><dl className="detail-list model-detail"><dt>Name</dt><dd>{value(model, ['name', 'model_name'])}</dd><dt>Version</dt><dd>{value(model, ['version', 'model_version'])}</dd><dt>Class count</dt><dd className="mono">{value(model, ['class_count', 'classCount'])}</dd><dt>Input size</dt><dd className="mono">{value(model, ['input_size', 'inputSize'])}</dd><dt>Measured inference</dt><dd className="mono">{model.inference_ms === undefined ? 'NO DATA' : `${model.inference_ms} ms`}</dd><dt>Device</dt><dd>{value(model, ['device'])}</dd></dl></> : <EmptyState>Model status unavailable</EmptyState>}</Panel></> }
