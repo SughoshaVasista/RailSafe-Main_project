@@ -10,7 +10,7 @@ Copy-Item .env.example .env
 npm run dev
 ```
 
-Run the development API separately with `python mock-server/server.py`. It listens on `http://localhost:8000`; demo credentials are `admin/admin` and `worker/worker`.
+Run the development API separately with `python mock-server/server.py`. It listens on `http://localhost:8000`; demo credentials are `admin/admin` and `worker/worker`. The mock server includes a temporary in-memory demo database with seeded alerts, tracks, train telemetry, sensor readings, diagnostics, model status, and switch decisions. It resets when the server restarts and must not be used for railway operations.
 
 ## Environment
 
