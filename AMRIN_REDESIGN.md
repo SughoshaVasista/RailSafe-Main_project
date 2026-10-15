@@ -181,7 +181,7 @@ Statuses: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`. The agent edits this table.
 | # | Phase | Status | Commit |
 |---|---|---|---|
 | 0 | Cleanup and decouple | DONE | 69744dd |
-| 1 | Design system and themes | TODO | |
+| 1 | Design system and themes | DONE | e01c8e0 |
 | 2 | City layer | TODO | |
 | 3 | Merge pages and clean routes | TODO | |
 | 4 | Login and sign-up | TODO | |
@@ -463,3 +463,5 @@ anti-pattern audit result, errors (for `BLOCKED`).
 <!-- Phase 0 log -->
 
 - Phase 0: cleanup and decouple. Started on branch `redesign/amrin-ui`; removed the app mode provider/toggle from the active shell, disabled the Firebase listener branch in `useData.js` so REST polling and filters are consistent, removed the duplicate `/ai` route, and renamed visible/package branding to AMRIN while retaining `amrin_auth`. The legacy `Simulation.jsx` remains out of the active shell graph for Phase 9 replacement; its local mode state was kept only so the unused file remains build-safe. `npm run build` passed and the RailSafe/AppMode grep audit was clean. `npm install --package-lock-only` was attempted but hung without output and was stopped; no dependency change was needed for this phase.
+
+- Phase 1: design system and themes. Added exact AMRIN light/dark tokens, IBM Plex font loading, theme persistence through `amrin_theme`, flat responsive compatibility styles, and reusable UI primitives under `src/components/ui/`. Loading states now render skeleton structure. Build passed; anti-pattern audit found no gradients, blur, text shadows, non-token radii, forbidden fonts, or box shadows.
