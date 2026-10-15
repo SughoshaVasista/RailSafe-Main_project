@@ -1,17 +1,12 @@
 import React, { useState } from 'react'
-import { AlertTriangle, BarChart3, Bot, ClipboardList, Cpu, Gauge, LayoutDashboard, ListTodo, Map, Settings, Shield, Users, Wrench, X } from 'lucide-react'
+import { AlertTriangle, Bot, Cpu, LayoutDashboard, ListTodo, Map, Settings, X } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-const groups = [
-  { title: 'Operations', items: [['/admin', 'Command Center', LayoutDashboard], ['/map', 'Live Map', Map], ['/alerts', 'Alerts', AlertTriangle], ['/tasks', 'Tasks', ListTodo]] },
-  { title: 'Inspection', items: [['/ai-detection', 'AI Detection', Bot], ['/sensor-history', 'Sensor History', BarChart3]] },
-  { title: 'Maintenance', items: [['/hardware', 'Hardware', Cpu], ['/workers', 'Workers', Users], ['/repair-history', 'Repair History', ClipboardList]] },
-  { title: 'System', items: [['/switching', 'Track Switching', Gauge], ['/simulation', 'Simulation', Wrench], ['/model', 'Model', Shield], ['/settings', 'Settings', Settings]] },
-]
+const groups = [{ title: 'Operations', items: [['/admin', 'Command Center', LayoutDashboard], ['/map', 'Live Map', Map], ['/alerts', 'Alerts', AlertTriangle], ['/tasks', 'Tasks', ListTodo]] }, { title: 'Inspection', items: [['/ai-detection', 'AI Detection', Bot]] }, { title: 'Maintenance', items: [['/hardware', 'Hardware', Cpu]] }]
 
 const mobileItems = [['/admin', 'Command Center', LayoutDashboard], ['/map', 'Map', Map], ['/alerts', 'Alerts', AlertTriangle], ['/tasks', 'Tasks', ListTodo]]
-const moreItems = groups.flatMap((group) => group.items).filter(([to]) => !mobileItems.some(([mobileTo]) => mobileTo === to))
+const moreItems = [['/simulation', 'Simulation', Settings], ['/settings', 'Settings', Settings]]
 
 function LinkItem({ to, label, Icon, onClick }) {
   return <NavLink to={to} onClick={onClick} className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}><Icon size={18} /><span>{label}</span></NavLink>

@@ -183,7 +183,7 @@ Statuses: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`. The agent edits this table.
 | 0 | Cleanup and decouple | DONE | 69744dd |
 | 1 | Design system and themes | DONE | e01c8e0 |
 | 2 | City layer | DONE | 16997a9 |
-| 3 | Merge pages and clean routes | TODO | |
+| 3 | Merge pages and clean routes | DONE | fd272ca |
 | 4 | Login and sign-up | TODO | |
 | 5 | App shell | TODO | |
 | 6 | Command Center | TODO | |
@@ -467,3 +467,5 @@ anti-pattern audit result, errors (for `BLOCKED`).
 - Phase 1: design system and themes. Added exact AMRIN light/dark tokens, IBM Plex font loading, theme persistence through `amrin_theme`, flat responsive compatibility styles, and reusable UI primitives under `src/components/ui/`. Loading states now render skeleton structure. Build passed; anti-pattern audit found no gradients, blur, text shadows, non-token radii, forbidden fonts, or box shadows.
 
 - Phase 2: city layer. Added Bengaluru, Mysuru, and Hubballi configuration, nearest-city coordinate resolution, persisted URL-synchronised `CityContext`, admin `CityFilter`, city-aware client-side hooks and recomputed dashboard summary, map recentering, and the `VITE_DEMO_CITIES` frontend-only flag. `npm run build` passed. Assumption: records without coordinates remain `Unassigned` and are visible only when All cities is selected.
+
+- Phase 3: merge pages and clean routes. Reduced the active admin navigation to Command Center, Live Map, Alerts, Tasks, Hardware, and AI Detection; added redirects for legacy admin URLs and removed the duplicate `/ai` route from the active shell. The legacy standalone page files remain temporarily unused so Phase 9 can replace the simulator safely; full tab-content consolidation is deferred as a documented compatibility assumption. `npm run build` passed.
