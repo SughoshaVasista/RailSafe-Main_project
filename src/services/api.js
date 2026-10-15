@@ -24,6 +24,7 @@ const get = (path, params) => api.get(path, { params }).then(({ data }) => data)
 const post = (path, body) => api.post(path, body).then(({ data }) => data)
 
 export const loginRequest = (credentials) => post('/auth/login', credentials)
+export const registerRequest = (body) => post('/auth/register', body)
 export const getAlerts = (filters = {}) => get('/alerts', filters)
 export const getAlert = (id) => get(`/alerts/${id}`)
 export const acknowledgeAlert = (id, body) => post(`/alerts/${id}/acknowledge`, body)

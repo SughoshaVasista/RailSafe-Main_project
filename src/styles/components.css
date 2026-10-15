@@ -11,6 +11,12 @@
 .login-error, .state-error { color: var(--signal-s3-text); }
 .demo-login { display: grid; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); color: var(--muted); }
 .demo-login > div { display: flex; gap: 8px; }
+.password-field { display: flex; gap: 8px; }
+.password-field input { flex: 1; }
+.auth-links { margin: 16px 0 0; color: var(--muted); font-size: 12px; line-height: 2; }
+.link-button { padding: 0; border: 0; color: inherit; background: transparent; text-decoration: underline; text-underline-offset: 3px; }
+.login fieldset { display: flex; gap: 14px; margin: 0; padding: 10px; border: 1px solid var(--border); }
+.login fieldset label { display: flex; grid-template-columns: auto 1fr; align-items: center; }
 .demo-login button, .button-secondary { min-height: 40px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); background: var(--surface); }
 .shell { min-height: 100svh; }
 .content { min-width: 0; }

@@ -5,6 +5,7 @@ import './styles/tokens.css'
 import './styles/base.css'
 import './styles/components.css'
 import Login from './pages/Login'
+import Signup from './pages/Signup'
 import Shell from './components/Shell'
 import ProtectedRoute from './components/ProtectedRoute'
 import { AuthProvider } from './context/AuthContext'
@@ -12,5 +13,5 @@ import { ThemeProvider } from './context/ThemeContext'
 import { CityProvider } from './context/CityContext'
 
 export default function App() {
-  return <BrowserRouter><AuthProvider><ThemeProvider><CityProvider><Routes><Route path="/login" element={<Login />} /><Route element={<ProtectedRoute allowedRoles={['admin', 'worker']} />}><Route path="/*" element={<Shell />} /></Route><Route path="*" element={<Navigate to="/login" replace />} /></Routes></CityProvider></ThemeProvider></AuthProvider></BrowserRouter>
+  return <BrowserRouter><AuthProvider><ThemeProvider><CityProvider><Routes><Route path="/login" element={<Login />} /><Route path="/signup" element={<Signup />} /><Route element={<ProtectedRoute allowedRoles={['admin', 'worker']} />}><Route path="/*" element={<Shell />} /></Route><Route path="*" element={<Navigate to="/login" replace />} /></Routes></CityProvider></ThemeProvider></AuthProvider></BrowserRouter>
 }

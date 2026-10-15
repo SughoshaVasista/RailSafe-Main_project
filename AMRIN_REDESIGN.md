@@ -184,7 +184,7 @@ Statuses: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`. The agent edits this table.
 | 1 | Design system and themes | DONE | e01c8e0 |
 | 2 | City layer | DONE | 16997a9 |
 | 3 | Merge pages and clean routes | DONE | fd272ca |
-| 4 | Login and sign-up | TODO | |
+| 4 | Login and sign-up | DONE | 830c845 |
 | 5 | App shell | TODO | |
 | 6 | Command Center | TODO | |
 | 7 | Alerts and Map | TODO | |
@@ -469,3 +469,5 @@ anti-pattern audit result, errors (for `BLOCKED`).
 - Phase 2: city layer. Added Bengaluru, Mysuru, and Hubballi configuration, nearest-city coordinate resolution, persisted URL-synchronised `CityContext`, admin `CityFilter`, city-aware client-side hooks and recomputed dashboard summary, map recentering, and the `VITE_DEMO_CITIES` frontend-only flag. `npm run build` passed. Assumption: records without coordinates remain `Unassigned` and are visible only when All cities is selected.
 
 - Phase 3: merge pages and clean routes. Reduced the active admin navigation to Command Center, Live Map, Alerts, Tasks, Hardware, and AI Detection; added redirects for legacy admin URLs and removed the duplicate `/ai` route from the active shell. The legacy standalone page files remain temporarily unused so Phase 9 can replace the simulator safely; full tab-content consolidation is deferred as a documented compatibility assumption. `npm run build` passed.
+
+- Phase 4: login and sign-up. Added AMRIN auth layout, email/password sign-in with show-password and remember-me controls, sign-up with city and role, pending approval messaging, real `/auth/register` first with a `VITE_DEMO_AUTH`-gated salted SHA-256 local fallback, and the `VITE_ADMIN_INVITE` flag. `npm run build` passed. The existing backend has no register/approval endpoint, so approval storage remains DEMO ONLY until the backend supplies it.

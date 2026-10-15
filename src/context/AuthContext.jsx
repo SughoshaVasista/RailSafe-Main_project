@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { loginRequest, registerUnauthorizedHandler } from '../services/api'
+import { loginRequest, registerRequest, registerUnauthorizedHandler } from '../services/api'
+import { loginDemo, registerDemo } from '../services/auth'
 
 const AUTH_KEY = 'amrin_auth'
 const AuthContext = createContext(null)
@@ -29,13 +30,10 @@ export function AuthProvider({ children }) {
     try {
       result = await loginRequest(credentials)
     } catch (error) {
-      const demoEnabled = import.meta.env.VITE_DEMO_AUTH === 'true'
-      const demoUsers = { admin: { password: 'admin', role: 'admin', name: 'Admin User' }, worker: { password: 'worker', role: 'worker', name: 'Maintenance Worker', worker_id: 'worker-01' } }
-      const demoUser = demoUsers[credentials.username]
-      if (!demoEnabled || !demoUser || demoUser.password !== credentials.password) throw error
-      result = { token: `demo-${credentials.username}-token`, ...demoUser }
+      if (import.meta.env.VITE_DEMO_AUTH !== 'true') throw error
+      result = await loginDemo(credentials.username, credentials.password)
     }
-    const nextAuth = { token: result.token, role: result.role, name: result.name, worker_id: result.worker_id }
+    const nextAuth = { token: result.token, role: result.role, name: result.name, worker_id: result.worker_id, city: result.city }
     const storage = remember ? window.localStorage : window.sessionStorage
     window.localStorage.removeItem(AUTH_KEY)
     window.sessionStorage.removeItem(AUTH_KEY)
@@ -44,7 +42,11 @@ export function AuthProvider({ children }) {
     return nextAuth
   }
 
-  const value = useMemo(() => ({ auth, user: auth, ready, login, logout }), [auth, ready])
+  const register = async (details) => {
+    try { return await registerRequest(details) } catch (error) { if (import.meta.env.VITE_DEMO_AUTH !== 'true') throw error; return registerDemo(details) }
+  }
+
+  const value = useMemo(() => ({ auth, user: auth, ready, login, register, logout }), [auth, ready])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
