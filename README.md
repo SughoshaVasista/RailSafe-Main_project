@@ -1,4 +1,4 @@
-# RailSafe
+# AMRIN
 
 React/Vite operations console for railway condition monitoring, inspection, maintenance, and decision support.
 
@@ -22,7 +22,7 @@ Run the development API separately with `python mock-server/server.py`. It liste
 
 ## Routes
 
-Admin routes include Command Center, Alerts, Live Map, Tasks, Workers, Hardware, AI Detection, Track Switching, Repair History, Sensor History, Simulation, Model, and Settings. Workers can access Tasks and the Map only.
+Admin routes include Command Center, Alerts, Live Map, Tasks, Workers, Hardware, and AI Detection. Workers can access Tasks and the Map only.
 
 ## Demo walkthrough
 
@@ -33,4 +33,4 @@ powershell -ExecutionPolicy Bypass -File scripts/demo-walkthrough.ps1
 ```
 
 The script walks through hardware online, an S3 crack alert, switch recommendation, worker assignment, repair status transitions, evidence upload, and alert resolution.
-# RailSafe-Main_project
+# AMRIN Frontend

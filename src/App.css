@@ -247,7 +247,7 @@ strong, code, time, .mono, .confidence, .data-line, .kpi strong, .sensor > stron
 @media (min-width: 1024px) {
   .shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); }
   .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 10; display: block; width: 248px; overflow-y: auto; padding: calc(18px + env(safe-area-inset-top)) 12px 20px; border-right: 1px solid var(--border-steel); background: var(--panel-slate); }
-  .sidebar::before { display: block; padding: 0 10px 22px; color: var(--catenary-blue); content: 'RAILSAFE'; font-family: var(--font-heading); font-size: 18px; font-weight: 700; }
+  .sidebar::before { display: block; padding: 0 10px 22px; color: var(--catenary-blue); content: 'AMRIN'; font-family: var(--font-heading); font-size: 18px; font-weight: 700; }
   .nav-group { margin-bottom: 18px; }
   .nav-group h2 { margin: 0 10px 6px; color: var(--text-secondary); font-family: var(--font-mono); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
   .sidebar .nav-link { justify-content: flex-start; min-height: 42px; padding: 8px 10px; border-left: 3px solid transparent; border-radius: 4px; font-size: 13px; }
