@@ -83,6 +83,9 @@
 .worker-list { display: grid; gap: 10px; }
 .worker-card { display: block; min-height: 120px; padding: 14px; color: var(--text); text-decoration: none; }
 .worker-card.next-job { border-width: 2px; }
+.worker-location-control { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 12px; }
+.worker-location-control .button-secondary { min-height: 48px; }
+.worker-location-control small, .worker-distance { color: var(--muted); font-family: var(--font-mono); font-size: 12px; }
 .worker-navigate { display: block; margin-top: 10px; }
 .worker-navigate a { display: inline-flex; min-height: 48px; align-items: center; color: var(--text); font-weight: 700; }
 .worker-card-top, .worker-card-body, .worker-detail-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
