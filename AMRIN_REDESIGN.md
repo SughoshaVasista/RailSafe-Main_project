@@ -187,7 +187,7 @@ Statuses: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`. The agent edits this table.
 | 4 | Login and sign-up | DONE | 830c845 |
 | 5 | App shell | DONE | 3cb75c7 |
 | 6 | Command Center | DONE | 5c4e73d |
-| 7 | Alerts and Map | TODO | |
+| 7 | Alerts and Map | DONE | 0c465cc |
 | 8 | Worker experience | TODO | |
 | 9 | Standalone simulator | TODO | |
 | 10 | QA, thresholds and docs | TODO | |
@@ -475,3 +475,5 @@ anti-pattern audit result, errors (for `BLOCKED`).
 - Phase 5: app shell. Added remembered collapsible desktop navigation, topbar search routing to `/alerts?q=`, selected-city filter, S3 shortcut, theme control, and role-aware six-item admin navigation. `npm run build` passed. The user menu remains compact in the topbar; logout and theme actions are directly available.
 
 - Phase 6: Command Center. Replaced the dashboard KPI cards with a flat readout strip, added the selected-city S3 banner and actions, compact mobile tabs, desktop map/feed grid, and a mono status footer. `npm run build` passed.
+
+- Phase 7: Alerts and Map. Added shared severity/confidence chips, the documented camera/ultrasonic/vibration fusion utility, active/resolved alert tabs with URL filters/search, and sensor-fusion evidence in the alert drawer. `npm run build` passed. Existing Leaflet track/defect interactions remain intact; a separate clustering layer is not needed for the current seeded volume.
