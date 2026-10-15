@@ -189,7 +189,7 @@ Statuses: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`. The agent edits this table.
 | 6 | Command Center | DONE | 5c4e73d |
 | 7 | Alerts and Map | DONE | 0c465cc |
 | 8 | Worker experience | DONE | 1e2eca5 |
-| 9 | Standalone simulator | TODO | |
+| 9 | Standalone simulator | DONE | 78fe727 |
 | 10 | QA, thresholds and docs | TODO | |
 
 ---
@@ -479,3 +479,5 @@ anti-pattern audit result, errors (for `BLOCKED`).
 - Phase 7: Alerts and Map. Added shared severity/confidence chips, the documented camera/ultrasonic/vibration fusion utility, active/resolved alert tabs with URL filters/search, and sensor-fusion evidence in the alert drawer. `npm run build` passed. Existing Leaflet track/defect interactions remain intact; a separate clustering layer is not needed for the current seeded volume.
 
 - Phase 8: worker experience. Added light-first worker defaults, city/name context, next-job emphasis, 48px navigation links, Google Maps navigation when coordinates exist, and retained the existing status/evidence flow with file capture and notes. `npm run build` passed.
+
+- Phase 9: standalone simulator. Added the frontend JS decision engine and five Vitest scenarios, moved `/simulation` outside auth, removed the legacy live/simulation API calls and page files, and added the no-live-data track schematic with scenario controls and decision rules. `npm run test` passed (5 tests) and `npm run build` passed. The optional POST decision toggle is intentionally omitted because this standalone route never calls live endpoints.

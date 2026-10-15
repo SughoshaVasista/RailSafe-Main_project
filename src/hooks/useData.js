@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getAIDetection, getAlerts, getDashboardEventLog, getDevices, getDeviceDiagnostics, getDeviceSensors, getModelStatus, getSimulationState, getSwitchStatus, getTasks, getTracks, getTrains, getWorkers } from '../services/api'
+import { getAIDetection, getAlerts, getDashboardEventLog, getDevices, getDeviceDiagnostics, getDeviceSensors, getModelStatus, getSwitchStatus, getTasks, getTracks, getTrains, getWorkers } from '../services/api'
 import { useCity } from '../context/CityContext'
 import { cityOf } from '../utils/city'
 
@@ -31,7 +31,6 @@ export const useSensorHistory = (deviceId, windowName = '24h') => useLiveResourc
 export const useDeviceDiagnostics = (deviceId) => useLiveResource({ path: deviceId ? `devices/${deviceId}/diagnostics` : null, fetcher: () => getDeviceDiagnostics(deviceId), deps: [deviceId], transform: (value) => value })
 export const useModelStatus = () => useLiveResource({ path: null, fetcher: getModelStatus, deps: [], transform: (value) => value?.model ?? value })
 export const useAIDetection = () => useLiveResource({ path: null, fetcher: getAIDetection, deps: [], transform: (value) => value?.detection ?? value })
-export const useSimulationState = () => useLiveResource({ path: null, fetcher: getSimulationState, deps: [] })
 export const useWorkers = () => { const { city } = useCity(); return useLiveResource({ path: null, fetcher: getWorkers, deps: [city], transform: (value) => unwrap(value).filter((item) => cityMatches(item, city)) }) }
 export const useDevices = () => { const { city } = useCity(); return useLiveResource({ path: 'devices', fetcher: getDevices, deps: [city], transform: (value) => unwrap(value).filter((item) => cityMatches(item, city)) }) }
 export const useTasks = (workerId) => { const { city } = useCity(); return useLiveResource({ path: workerId ? `tasks/${workerId}` : null, fetcher: () => getTasks(workerId ? { worker_id: workerId } : {}), deps: [workerId, city], transform: (value) => unwrap(value).filter((item) => cityMatches(item, city)) }) }

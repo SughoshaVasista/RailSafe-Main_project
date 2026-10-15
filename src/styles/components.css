@@ -151,6 +151,31 @@
 .skeleton { display: grid; gap: 9px; padding: 16px; }
 .skeleton span { display: block; height: 12px; background: var(--surface-2); }
 .ui-toast { position: fixed; right: 16px; bottom: 16px; z-index: 50; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); background: var(--surface); }
+.simulator { min-height: 100svh; padding: 18px; color: #16181A; background: #ECEAE4; }
+.simulation-warning { margin: -18px -18px 18px; padding: 9px 18px; color: #1A1200; background: var(--signal-s2); font-family: var(--font-mono); font-size: 11px; }
+.simulator-head, .sim-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.simulator-head { max-width: 1200px; margin: auto auto 18px; }
+.simulator-head h1 { margin-bottom: 0; }
+.simulator-layout { display: grid; max-width: 1200px; margin: auto; gap: 14px; }
+.schematic, .sim-panel { border: 1px solid #B8B5AD; background: #F4F3EF; }
+.schematic { padding: 14px; }
+.schematic svg { display: block; width: 100%; min-height: 260px; color: #16181A; font-family: var(--font-heading); font-size: 12px; }
+.schematic path { fill: none; stroke: currentColor; stroke-width: 2; }
+.schematic circle { fill: currentColor; }
+.schematic rect { fill: var(--signal-s1); }
+.sim-controls { justify-content: flex-start; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid #B8B5AD; }
+.sim-panel { padding: 14px; }
+.sim-panel h2 { margin: 0 0 10px; }
+.scenario-option { display: flex; min-height: 40px; align-items: center; gap: 8px; border-bottom: 1px solid #D9D7D0; }
+.sim-rules { margin-top: 14px; border-top: 1px solid #B8B5AD; }
+.sim-rules p { display: flex; gap: 8px; padding: 8px 0; margin: 0; border-bottom: 1px solid #D9D7D0; font-size: 12px; }
+.pass, .fail { min-width: 38px; font-family: var(--font-mono); font-size: 10px; font-weight: 700; }
+.pass { color: #16845A; }
+.fail { color: var(--signal-s3-text); }
+.sim-scores { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 14px 0; }
+.sim-scores div { padding: 10px; border: 1px solid #D9D7D0; font-family: var(--font-heading); }
+.sim-scores strong { display: block; margin-top: 5px; font-family: var(--font-mono); }
+@media (min-width: 900px) { .simulator { padding: 28px; } .simulation-warning { margin: -28px -28px 28px; } .simulator-layout { grid-template-columns: minmax(0, 1.5fr) minmax(320px, .8fr); } }
 @media (min-width: 768px) { .page { padding: 28px 22px 40px; } .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } .cards { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); } .leaflet-map { height: 500px; } }
 @media (min-width: 1024px) { .shell { display: grid; grid-template-columns: 248px minmax(0, 1fr); } .sidebar { position: fixed; inset: 0 auto 0 0; z-index: 10; display: block; width: 248px; overflow-y: auto; padding: calc(14px + env(safe-area-inset-top)) 12px 20px; border-right: 1px solid var(--border); background: var(--surface); } .sidebar::before { display: block; padding: 0 10px 20px; content: 'AMRIN'; font-family: var(--font-heading); font-size: 18px; font-weight: 700; } .sidebar .nav-link { justify-content: flex-start; min-height: 42px; padding: 8px 10px; border-left: 2px solid transparent; font-size: 13px; } .sidebar .nav-link.active { border-left-color: var(--ink); } .content { grid-column: 2; min-width: 0; } .mobile-nav, .sheet-backdrop { display: none; } .page { padding: 30px 28px 40px; } .command-grid { grid-template-columns: minmax(0, 1.75fr) minmax(300px, .85fr); } .dashboard-tab-panel { display: block; } .dashboard-tabs { display: none; } .command-map { grid-row: span 2; } .event-log-mobile-panel { display: block; } .worker-detail-grid, .ai-detection-grid { grid-template-columns: minmax(0, 1.5fr) minmax(340px, .8fr); } .shared-drawer, .alert-drawer { width: min(560px, 48vw); height: 100svh; max-height: 100svh; } .history-grid, .simulation-grid, .settings-grid, .switching-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .sidebar-toggle { display: none; }
