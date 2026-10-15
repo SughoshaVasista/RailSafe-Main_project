@@ -15,12 +15,6 @@ const labels = { ASSIGNED: 'Assigned', ACCEPTED: 'Accepted', IN_PROGRESS: 'In Pr
 const nextStatus = { ASSIGNED: 'ACCEPTED', ACCEPTED: 'IN_PROGRESS', IN_PROGRESS: 'COMPLETED' }
 const buttonLabel = { ASSIGNED: 'Accept', ACCEPTED: 'Start Repair', IN_PROGRESS: 'Upload Photo', COMPLETED: 'Completed' }
 const display = (value) => value === undefined || value === null || value === '' ? 'NO DATA' : value
-const distanceKm = (from, to) => {
-  const radians = (degrees) => degrees * Math.PI / 180
-  const [lat1, lon1] = from.map(radians); const [lat2, lon2] = to.map(radians)
-  const a = Math.sin((lat2 - lat1) / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin((lon2 - lon1) / 2) ** 2
-  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
 
 function MiniMap({ task }) {
   const gps = task.gps || {}; const lat = Number(gps.lat ?? gps.latitude); const lng = Number(gps.lng ?? gps.longitude)
@@ -28,17 +22,6 @@ function MiniMap({ task }) {
   return <div className="mini-map"><MapContainer center={[lat, lng]} zoom={15} scrollWheelZoom={false} dragging={false} tap={false}><TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" /><Marker position={[lat, lng]} /></MapContainer></div>
 }
 
-function JobRow({ task, index, position }) {
-  const gps = task.gps || {}
-  const lat = Number(gps.lat ?? gps.latitude ?? task.lat ?? task.latitude)
-  const lng = Number(gps.lng ?? gps.longitude ?? task.lng ?? task.longitude)
-  const hasDestination = Number.isFinite(lat) && Number.isFinite(lng)
-  const away = position && hasDestination ? distanceKm(position, [lat, lng]) : null
-  return <Link className={`worker-card ${index === 0 ? 'next-job' : ''}`} to={`/worker/${task.id}`}>
-    <div className="worker-card-top"><Lamp severity={String(task.priority || task.severity || 'offline').toLowerCase()} label={task.priority || task.severity || 'NO DATA'} /><code>{display(task.id)}</code></div>
-    <div className="worker-card-body"><div><p className="eyebrow">{index === 0 ? 'Next job' : 'Assigned job'}</p><h2>{display(task.defect || task.type)}</h2><p className="data-line">{display(task.chainage)} · {display(task.track)}</p><small>{display(labels[task.status] || task.status)}</small>{index === 0 && away !== null && <p className="worker-distance">{away.toFixed(1)} km away</p>}{hasDestination && <span className="worker-navigate"><a href={`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`} onClick={(event) => event.stopPropagation()}>Navigate</a></span>}</div>{task.thumbnail || task.image_url ? <img src={task.thumbnail || task.image_url} alt="Defect thumbnail" /> : <div className="thumbnail-empty"><ImageUnavailable /></div>}</div>
-  </Link>
-}
 function Comparison({ before, after }) {
   const [position, setPosition] = useState(50)
   if (!before && !after) return <ImageUnavailable />
@@ -60,20 +43,9 @@ function TaskDetail({ task, refresh }) {
 }
 
 export default function Worker() {
-  const { taskId } = useParams(); const { user } = useAuth(); const { theme, setTheme } = useTheme(); const workerId = user?.worker_id || user?.id; const state = useTasks(workerId); const [position, setPosition] = useState(null); const [locationMessage, setLocationMessage] = useState('')
+  const { taskId } = useParams(); const { user } = useAuth(); const { theme, setTheme } = useTheme(); const workerId = user?.worker_id || user?.id; const state = useTasks(workerId)
   useEffect(() => { if (!window.localStorage.getItem('amrin_theme') && theme !== 'light') setTheme('light') }, [theme, setTheme])
   const items = useMemo(() => { const list = Array.isArray(state.data) ? state.data : []; return list.filter((task) => !task.worker_id || task.worker_id === workerId) }, [state.data, workerId]); const critical = items.some((task) => String(task.priority || task.severity).toUpperCase() === 'S3'); const task = taskId ? items.find((item) => String(item.id) === String(taskId)) : null
   if (taskId) return <>{state.loading ? <LoadingState>Loading task...</LoadingState> : state.error ? <ErrorState /> : task ? <TaskDetail task={task} refresh={state.refresh} /> : <EmptyState>No maintenance tasks assigned</EmptyState>}</>
-  const requestLocation = () => { setLocationMessage(''); if (!navigator.geolocation) { setLocationMessage('Location is unavailable in this browser.'); return } navigator.geolocation.getCurrentPosition(({ coords }) => { setPosition([coords.latitude, coords.longitude]); setLocationMessage('Distance uses your current browser location.') }, (error) => { setLocationMessage(error.code === error.PERMISSION_DENIED ? 'Location permission was not granted.' : 'Could not read your current location.') }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }) }
-  return <>
-    <Header title="Assigned jobs" text={`${display(user?.name)} · ${display(user?.city || 'Assigned city')}`} />
-    {critical && <div className="critical-banner"><Lamp severity="critical" label="S3" /><strong>Critical defect assigned. Follow the safety procedure.</strong></div>}
-    {items.length > 0 && <div className="worker-location-control"><button className="button-secondary" onClick={requestLocation}>Calculate distance from my location</button>{locationMessage && <small role="status">{locationMessage}</small>}</div>}
-    <div className="worker-list">
-      {state.loading ? <LoadingState>Loading tasks...</LoadingState> : state.error ? <ErrorState /> : items.length ? items.map((taskItem, index) => <JobRow key={taskItem.id} task={taskItem} index={index} position={position} />) : <EmptyState>No maintenance tasks assigned</EmptyState>}
-    </div>
-  </>
+  return <><Header title="Assigned jobs" text={`${display(user?.name)} · ${display(user?.city || 'Assigned city')}`} />{critical && <div className="critical-banner"><Lamp severity="critical" label="S3" /><strong>Critical defect assigned. Follow the safety procedure.</strong></div>}<div className="worker-list">{state.loading ? <LoadingState>Loading tasks...</LoadingState> : state.error ? <ErrorState /> : items.length ? items.map((taskItem, index) => <Link className={`worker-card ${index === 0 ? 'next-job' : ''}`} to={`/worker/${taskItem.id}`} key={taskItem.id}><div className="worker-card-top"><Lamp severity={String(taskItem.priority || taskItem.severity || 'offline').toLowerCase()} label={taskItem.priority || taskItem.severity || 'NO DATA'} /><code>{display(taskItem.id)}</code></div><div className="worker-card-body"><div><p className="eyebrow">{index === 0 ? 'Next job' : 'Assigned job'}</p><h2>{display(taskItem.defect || taskItem.type)}</h2><p className="data-line">{display(taskItem.chainage)} · {display(taskItem.track)}</p><small>{display(taskItem.status && labels[taskItem.status] ? labels[taskItem.status] : taskItem.status)}</small>{taskItem.gps?.lat && <span className="worker-navigate"><a href={`https://www.google.com/maps/dir/?api=1&destination=${taskItem.gps.lat},${taskItem.gps.lng}`} onClick={(event) => event.stopPropagation()}>Navigate</a></span>}</div>{taskItem.thumbnail || taskItem.image_url ? <img src={taskItem.thumbnail || taskItem.image_url} alt="Defect thumbnail" /> : <div className="thumbnail-empty"><ImageUnavailable /></div>}</div></Link>) : <EmptyState>No maintenance tasks assigned</EmptyState>}</div></>
 }
-
-
-
