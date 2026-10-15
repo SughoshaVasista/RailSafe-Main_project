@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ArrowLeft, MapPin, Upload } from 'lucide-react'
 import { MapContainer, Marker, TileLayer } from 'react-leaflet'
@@ -6,6 +6,7 @@ import Header from '../components/Header'
 import Lamp from '../components/Lamp'
 import { EmptyState, ErrorState, ImageUnavailable, LoadingState, GpsUnavailable } from '../components/StateMessage'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 import { useTasks } from '../hooks/useData'
 import { updateTaskStatus, uploadTaskEvidence } from '../services/api'
 
@@ -42,8 +43,9 @@ function TaskDetail({ task, refresh }) {
 }
 
 export default function Worker() {
-  const { taskId } = useParams(); const { user } = useAuth(); const workerId = user?.worker_id || user?.id; const state = useTasks(workerId)
+  const { taskId } = useParams(); const { user } = useAuth(); const { theme, setTheme } = useTheme(); const workerId = user?.worker_id || user?.id; const state = useTasks(workerId)
+  useEffect(() => { if (!window.localStorage.getItem('amrin_theme') && theme !== 'light') setTheme('light') }, [theme, setTheme])
   const items = useMemo(() => { const list = Array.isArray(state.data) ? state.data : []; return list.filter((task) => !task.worker_id || task.worker_id === workerId) }, [state.data, workerId]); const critical = items.some((task) => String(task.priority || task.severity).toUpperCase() === 'S3'); const task = taskId ? items.find((item) => String(item.id) === String(taskId)) : null
   if (taskId) return <>{state.loading ? <LoadingState>Loading task...</LoadingState> : state.error ? <ErrorState /> : task ? <TaskDetail task={task} refresh={state.refresh} /> : <EmptyState>No maintenance tasks assigned</EmptyState>}</>
-  return <><Header title="Assigned jobs" text="Repair tasks assigned to your worker account." />{critical && <div className="critical-banner"><Lamp severity="critical" label="S3" /><strong>Critical defect assigned. Follow the safety procedure.</strong></div>}<div className="worker-list">{state.loading ? <LoadingState>Loading tasks...</LoadingState> : state.error ? <ErrorState /> : items.length ? items.map((taskItem) => <Link className="worker-card" to={`/worker/${taskItem.id}`} key={taskItem.id}><div className="worker-card-top"><Lamp severity={String(taskItem.priority || taskItem.severity || 'offline').toLowerCase()} label={taskItem.priority || taskItem.severity || 'NO DATA'} /><code>{display(taskItem.id)}</code></div><div className="worker-card-body"><div><h2>{display(taskItem.defect || taskItem.type)}</h2><p className="data-line">{display(taskItem.chainage)}</p><small>{display(taskItem.status && labels[taskItem.status] ? labels[taskItem.status] : taskItem.status)}</small></div>{taskItem.thumbnail || taskItem.image_url ? <img src={taskItem.thumbnail || taskItem.image_url} alt="Defect thumbnail" /> : <div className="thumbnail-empty"><ImageUnavailable /></div>}</div></Link>) : <EmptyState>No maintenance tasks assigned</EmptyState>}</div></>
+  return <><Header title="Assigned jobs" text={`${display(user?.name)} · ${display(user?.city || 'Assigned city')}`} />{critical && <div className="critical-banner"><Lamp severity="critical" label="S3" /><strong>Critical defect assigned. Follow the safety procedure.</strong></div>}<div className="worker-list">{state.loading ? <LoadingState>Loading tasks...</LoadingState> : state.error ? <ErrorState /> : items.length ? items.map((taskItem, index) => <Link className={`worker-card ${index === 0 ? 'next-job' : ''}`} to={`/worker/${taskItem.id}`} key={taskItem.id}><div className="worker-card-top"><Lamp severity={String(taskItem.priority || taskItem.severity || 'offline').toLowerCase()} label={taskItem.priority || taskItem.severity || 'NO DATA'} /><code>{display(taskItem.id)}</code></div><div className="worker-card-body"><div><p className="eyebrow">{index === 0 ? 'Next job' : 'Assigned job'}</p><h2>{display(taskItem.defect || taskItem.type)}</h2><p className="data-line">{display(taskItem.chainage)} · {display(taskItem.track)}</p><small>{display(taskItem.status && labels[taskItem.status] ? labels[taskItem.status] : taskItem.status)}</small>{taskItem.gps?.lat && <span className="worker-navigate"><a href={`https://www.google.com/maps/dir/?api=1&destination=${taskItem.gps.lat},${taskItem.gps.lng}`} onClick={(event) => event.stopPropagation()}>Navigate</a></span>}</div>{taskItem.thumbnail || taskItem.image_url ? <img src={taskItem.thumbnail || taskItem.image_url} alt="Defect thumbnail" /> : <div className="thumbnail-empty"><ImageUnavailable /></div>}</div></Link>) : <EmptyState>No maintenance tasks assigned</EmptyState>}</div></>
 }
