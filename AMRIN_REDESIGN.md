@@ -183,7 +183,7 @@ Statuses: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`. The agent edits this table.
 | 0 | Cleanup and decouple | DONE | 69744dd |
 | 1 | Design system and themes | DONE | e01c8e0 |
 | 2 | City layer | DONE | 16997a9 |
-| 3 | Merge pages and clean routes | DONE | fd272ca + c4cfb64 |
+| 3 | Merge pages and clean routes | DONE | fd272ca |
 | 4 | Login and sign-up | DONE | 830c845 |
 | 5 | App shell | DONE | 3cb75c7 |
 | 6 | Command Center | DONE | 5c4e73d |
@@ -485,5 +485,3 @@ anti-pattern audit result, errors (for `BLOCKED`).
 - Phase 9: standalone simulator. Added the frontend JS decision engine and five Vitest scenarios, moved `/simulation` outside auth, removed the legacy live/simulation API calls and page files, and added the no-live-data track schematic with scenario controls and decision rules. `npm run test` passed (5 tests) and `npm run build` passed. The optional POST decision toggle is intentionally omitted because this standalone route never calls live endpoints.
 
 - Phase 10: QA, thresholds and docs. Added `src/config/thresholds.js`, wired the minimum safe distance and temperature threshold, removed unused merged page files, updated README/plan/env documentation, and ran the final audits. `npm run test` passed (5 tests); `npm run build` passed; AMRIN/AppMode grep was clean; forbidden gradients, blur, shadows, large radii, old fonts, and marketing copy were clean. The `git diff --stat main -- mock-server train-sim` check still reports the pre-existing demo seed in `mock-server/server.py` inherited from the starting `mode-1` branch; no mock-server or train-sim file was edited during this redesign run.
-
-- Follow-up Phase 3: Merged Workers and Pending signups into Tasks tabs, added Active/Resolved Alerts tabs and Devices/History/Model Hardware tabs. Approval actions are DEMO ONLY in browser storage because the real admin API is absent. Files: `src/pages/Tasks.jsx`, `src/pages/Alerts.jsx`, `src/pages/Hardware.jsx`, `src/services/auth.js`. Assumption: retained sensor history as the available locally sampled measurements view. Build passed; browser navigation not verified.
