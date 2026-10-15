@@ -184,7 +184,7 @@
 .simulator-layout { display: grid; max-width: 1200px; margin: auto; gap: 14px; }
 .schematic, .sim-panel { border: 1px solid #B8B5AD; background: #F4F3EF; }
 .schematic { padding: 14px; }
-.schematic svg { display: block; width: 100%; height: auto; min-height: 260px; aspect-ratio: 760 / 300; color: #16181A; font-family: var(--font-heading); font-size: 12px; }
+.schematic svg { display: block; width: 100%; min-height: 260px; color: #16181A; font-family: var(--font-heading); font-size: 12px; }
 .schematic path { fill: none; stroke: currentColor; stroke-width: 2; }
 .schematic circle { fill: currentColor; }
 .schematic rect { fill: var(--signal-s1); }

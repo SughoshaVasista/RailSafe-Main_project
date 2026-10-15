@@ -24,10 +24,6 @@ Run the development API separately with `python mock-server/server.py`. It liste
 
 Admin routes include Command Center, Alerts, Live Map, Tasks, Hardware, and AI Detection. Workers can access Tasks and the Map only. `/simulation` is a public standalone decision-support simulator and never uses live endpoints.
 
-Alerts includes Active and Resolved tabs. Tasks includes Tasks and Workers tabs; pending demo signups can be approved in the Workers tab when `VITE_DEMO_AUTH=true` (approval is stored only in this browser). Hardware includes Devices, History, and Model tabs. The map clusters defects at low zoom and offers severity legend and city quick jumps. Workers can optionally grant browser location to calculate distance to the next job; denial leaves navigation links available.
-
-The simulator supports Play, Pause, Step, Reset, 1x/2x/4x playback, and custom scenarios for defects, track occupancy, switch availability, and distance. It is a local decision-support simulation and never controls signalling or displays live data.
-
 ## Demo walkthrough
 
 With the mock server and Vite running, execute:
@@ -36,7 +32,5 @@ With the mock server and Vite running, execute:
 powershell -ExecutionPolicy Bypass -File scripts/demo-walkthrough.ps1
 ```
 
-The script walks through hardware online, an S3 crack alert, switch recommendation, worker assignment, repair status transitions, evidence upload, and alert resolution. Run the frontend separately with `npm run dev`; public simulator route: `/simulation`. Configure `VITE_DEMO_AUTH`, `VITE_DEMO_CITIES`, `VITE_ADMIN_INVITE`, and optional `VITE_MAPTILER_KEY` in `.env` before starting Vite.
-
-The demo seed in `mock-server/` is inherited and unchanged by the frontend redesign. Real pending-user administration and Firebase/backend integration require corresponding backend endpoints; local approval is explicitly demo-only.
+The script walks through hardware online, an S3 crack alert, switch recommendation, worker assignment, repair status transitions, evidence upload, and alert resolution.
 # AMRIN Frontend
