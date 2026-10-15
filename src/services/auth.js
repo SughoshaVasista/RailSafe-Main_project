@@ -3,24 +3,6 @@ const USERS_KEY = 'amrin_demo_users'
 const readUsers = () => { try { return JSON.parse(window.localStorage.getItem(USERS_KEY) || '[]') } catch { return [] } }
 const writeUsers = (users) => window.localStorage.setItem(USERS_KEY, JSON.stringify(users))
 
-// DEMO ONLY: account approvals are local to this browser until the backend provides admin endpoints.
-export function pendingDemoUsers() {
-  if (import.meta.env.VITE_DEMO_AUTH !== 'true') return []
-  return readUsers().filter((user) => user.status === 'pending').map(({ passwordHash, salt, ...user }) => user)
-}
-
-// DEMO ONLY: these mutations do not approve accounts on a real server.
-export function approveDemoUser(email) {
-  if (import.meta.env.VITE_DEMO_AUTH !== 'true') throw new Error('Demo authentication is disabled')
-  writeUsers(readUsers().map((user) => user.email === email ? { ...user, status: 'approved' } : user))
-}
-
-// DEMO ONLY: rejected account records are removed from the browser-local demo store.
-export function rejectDemoUser(email) {
-  if (import.meta.env.VITE_DEMO_AUTH !== 'true') throw new Error('Demo authentication is disabled')
-  writeUsers(readUsers().filter((user) => user.email !== email))
-}
-
 async function digest(value) {
   const bytes = new TextEncoder().encode(value)
   const buffer = await crypto.subtle.digest('SHA-256', bytes)
