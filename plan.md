@@ -5,9 +5,9 @@
 The AMRIN frontend redesign is executed phase-by-phase on `redesign/amrin-ui`. The active client
 uses IBM Plex typography, persisted light/dark themes, city-aware filtering, role-aware auth,
 flat operations navigation, shared severity/confidence chips, and a public `/simulation` route.
-Thresholds are centralized in `src/config/thresholds.js`; demo auth and city data are controlled
-by `VITE_DEMO_AUTH` and `VITE_DEMO_CITIES`. This software is simulation and decision support, not
-live railway signalling control.
+Alerts, Tasks, and Hardware consolidate resolved alerts, workers/approvals, and sensor history/model status into tabs. Map clustering, legend and city quick jumps are implemented. Worker distance is calculated only after the worker requests browser geolocation. The simulator supports functional playback and custom scenarios. Thresholds are centralized in `src/config/thresholds.js`; demo auth and city data are controlled by `VITE_DEMO_AUTH` and `VITE_DEMO_CITIES`. This software is simulation and decision support, not live railway signalling control.
+
+Admin approval and account persistence are browser-local and DEMO ONLY while `VITE_DEMO_AUTH=true`; real backend/Firebase operations require backend APIs that are not present in this repository. The mock server seed is inherited and was not modified by the redesign follow-up.
 
 ## Goal
 
