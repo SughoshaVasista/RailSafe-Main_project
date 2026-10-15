@@ -9,7 +9,6 @@ import { cities } from '../config/cities'
 import { EmptyState, ErrorState, GpsUnavailable, LoadingState } from './StateMessage'
 
 const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-const TILE_ATTRIBUTION = '&copy; OpenStreetMap contributors'
 const MAP_CENTER = [Number(import.meta.env.VITE_MAP_LAT || 12.9716), Number(import.meta.env.VITE_MAP_LNG || 77.5946)]
 const MAP_ZOOM = 13
 const severityTone = (severity) => ({ S3: 'critical', S2: 'warning', S1: 'minor' }[String(severity || '').toUpperCase()] || 'clear')
@@ -44,29 +43,6 @@ function FitDefects({ positions, request }) {
   const map = useMap()
   useEffect(() => { if (!request || !positions.length) return; map.fitBounds(positions, { padding: [24, 24], maxZoom: 16 }) }, [map, positions, request])
   return null
-}
-
-function DefectLayers({ defects, onSelect }) {
-  const map = useMap()
-  const zoom = map.getZoom()
-  const groups = useMemo(() => {
-    if (zoom >= 13) return defects.map((item) => ({ key: item.id, position: unwrapPosition(item), items: [item] })).filter((group) => group.position)
-    const cells = new Map()
-    defects.forEach((item) => {
-      const point = unwrapPosition(item)
-      if (!point) return
-      const projected = map.project(point, zoom)
-      const key = `${Math.floor(projected.x / 56)}:${Math.floor(projected.y / 56)}`
-      const group = cells.get(key) || { key, points: [], items: [] }
-      group.points.push(point); group.items.push(item); cells.set(key, group)
-    })
-    return [...cells.values()].map((group) => ({ ...group, position: [group.points.reduce((sum, point) => sum + point[0], 0) / group.points.length, group.points.reduce((sum, point) => sum + point[1], 0) / group.points.length] }))
-  }, [defects, map, zoom])
-  return groups.map((group) => {
-    const worst = ['S3', 'S2', 'S1'].find((severity) => group.items.some((item) => item.severity === severity)) || 'S1'
-    const icon = group.items.length === 1 ? iconFor(`defect-marker defect-${severityTone(worst)}`, '') : divIcon({ className: 'map-div-icon', html: `<span class="cluster-marker cluster-${severityTone(worst)}">${group.items.length}</span>`, iconSize: [34, 34], iconAnchor: [17, 17] })
-    return <Marker key={group.key} position={group.position} icon={icon} eventHandlers={{ click: () => group.items.length > 1 ? map.setView(group.position, Math.min(zoom + 2, 16), { animate: false }) : onSelect(group.items[0]) }}><Popup>{group.items.length === 1 ? <><b>{group.items[0].defect || group.items[0].class || 'Defect'}</b><br />{worst} · {group.items[0].chainage || 'Chainage unavailable'}</> : `${group.items.length} defects · ${worst} highest severity`}</Popup></Marker>
-  })
 }
 
 function CityCenter({ city }) {
@@ -109,9 +85,5 @@ export default function MapView() {
   const switchPosition = unwrapPosition(switchState.data)
   const switchIcon = switchState.data ? iconFor(`switch-marker switch-${String(switchState.data.state || switchState.data.status || 'offline').toLowerCase()}`, '↕') : null
   const showNoData = !mapState.loading && !mapState.error && !tracks.length && !trains.length && !visibleDefects.length
-  const mapTilerKey = import.meta.env.VITE_MAPTILER_KEY
-  const tileUrl = mapTilerKey ? `https://api.maptiler.com/maps/toner-v2/{z}/{x}/{y}.png?key=${mapTilerKey}` : TILE_URL
-  const tileAttribution = mapTilerKey ? '&copy; MapTiler &copy; OpenStreetMap contributors' : TILE_ATTRIBUTION
-  const jumpToCity = (target) => { setSelected(null); if (target === 'all') { setSearchParams((current) => { const next = new URLSearchParams(current); next.delete('city'); return next }, { replace: true }); return } setSearchParams((current) => { const next = new URLSearchParams(current); next.set('city', target); return next }, { replace: true }) }
-  return <div className="map-workspace"><div className="map-toolbar"><button className="map-pill" onClick={() => setFollowing((value) => !value)} disabled={!trainPosition}><LocateFixed size={15} />{following ? 'Following Train' : 'Follow Train'}</button><button className="map-pill" onClick={() => setFitRequest((value) => value + 1)} disabled={!positions.length}><Maximize2 size={15} />Fit All Defects</button><button className="map-pill filter-toggle" onClick={() => setFiltersOpen(true)}><Filter size={15} />Filters</button></div><div className="map-city-jumps" aria-label="Jump to city"><span>City</span>{cities.map((item) => <button key={item.id} className={city === item.id ? 'selected' : ''} onClick={() => jumpToCity(item.id)}>{item.name}</button>)}<button className={city === 'all' ? 'selected' : ''} onClick={() => jumpToCity('all')}>All</button></div><FilterPanel filters={filters} options={options} onChange={updateFilter} open={filtersOpen} onClose={() => setFiltersOpen(false)} /><div className="map"><MapContainer center={MAP_CENTER} zoom={MAP_ZOOM} dragging tap className="leaflet-map"><TileLayer attribution={tileAttribution} url={tileUrl} className="desaturated-tiles" /><CityCenter city={city} /><MapGestures onUserGesture={() => setFollowing(false)} /><FollowTrain train={train} following={following} /><FitDefects positions={positions} request={fitRequest} />{tracks.map((track) => { const line = trackPositions(track); return line.length > 1 ? <Polyline key={track.id} positions={line} pathOptions={{ color: severityColor(track.severity || track.max_severity), weight: 3 }} eventHandlers={{ click: () => setSelected({ type: 'Track', item: track }) }} /> : null })}<DefectLayers defects={visibleDefects} onSelect={(item) => setSelected({ type: 'Defect', item })} />{trainPosition && <Marker position={trainPosition} icon={iconFor('train-marker', 'T')} eventHandlers={{ click: () => setSelected({ type: 'Train', item: train }) }}><Popup>{train.id || 'Train'}</Popup></Marker>}{switchPosition && <Marker position={switchPosition} icon={switchIcon} eventHandlers={{ click: () => setSelected({ type: 'Switch', item: switchState.data }) }}><Popup>{switchState.data.state || switchState.data.status || 'NO DATA'}</Popup></Marker>}</MapContainer><div className="map-legend" aria-label="Map legend"><b>Defects</b>{[['S3','◆'],['S2','▲'],['S1','●']].map(([label,glyph]) => <span key={label}><i className={`legend-${label.toLowerCase()}`}>{glyph}</i>{label}</span>)}<span><i className="legend-train">T</i>Train</span><span><i className="legend-track" />Track</span></div>{mapState.loading && <LoadingState>Loading map data...</LoadingState>}{mapState.error && <ErrorState>API unavailable</ErrorState>}{!mapState.loading && !mapState.error && trains.length > 0 && !trainPosition && <GpsUnavailable />}{showNoData && <EmptyState>Map data unavailable</EmptyState>}</div><DetailPanel selected={selected} onClose={() => setSelected(null)} /></div>
+  return <div className="map-workspace"><div className="map-toolbar"><button className="map-pill" onClick={() => setFollowing((value) => !value)} disabled={!trainPosition}><LocateFixed size={15} />{following ? 'Following Train' : 'Follow Train'}</button><button className="map-pill" onClick={() => setFitRequest((value) => value + 1)} disabled={!positions.length}><Maximize2 size={15} />Fit All Defects</button><button className="map-pill filter-toggle" onClick={() => setFiltersOpen(true)}><Filter size={15} />Filters</button></div><FilterPanel filters={filters} options={options} onChange={updateFilter} open={filtersOpen} onClose={() => setFiltersOpen(false)} /><div className="map"><MapContainer center={MAP_CENTER} zoom={MAP_ZOOM} dragging tap className="leaflet-map"><TileLayer attribution="&copy; OpenStreetMap contributors" url={TILE_URL} /><CityCenter city={city} /><MapGestures onUserGesture={() => setFollowing(false)} /><FollowTrain train={train} following={following} /><FitDefects positions={positions} request={fitRequest} />{tracks.map((track) => { const line = trackPositions(track); return line.length > 1 ? <Polyline key={track.id} positions={line} pathOptions={{ color: severityColor(track.severity || track.max_severity), weight: 5 }} eventHandlers={{ click: () => setSelected({ type: 'Track', item: track }) }} /> : null })}{visibleDefects.map((defect) => { const position = unwrapPosition(defect); return position ? <Marker key={defect.id} position={position} icon={iconFor(`defect-marker defect-${severityTone(defect.severity)}`, '')} eventHandlers={{ click: () => setSelected({ type: 'Defect', item: defect }) }}><Popup><b>{defect.defect || defect.class || 'NO DATA'}</b><br />{defect.severity || 'NO DATA'} · {defect.confidence ?? 'NO DATA'}<br />{defect.chainage || 'NO DATA'}</Popup></Marker> : null })}{trainPosition && <Marker position={trainPosition} icon={iconFor('train-marker', 'T')} eventHandlers={{ click: () => setSelected({ type: 'Train', item: train }) }}><Popup>{train.id || 'Train'}</Popup></Marker>}{switchPosition && <Marker position={switchPosition} icon={switchIcon} eventHandlers={{ click: () => setSelected({ type: 'Switch', item: switchState.data }) }}><Popup>{switchState.data.state || switchState.data.status || 'NO DATA'}</Popup></Marker>}</MapContainer>{mapState.loading && <LoadingState>Loading map data...</LoadingState>}{mapState.error && <ErrorState>API unavailable</ErrorState>}{!mapState.loading && !mapState.error && trains.length > 0 && !trainPosition && <GpsUnavailable />}{showNoData && <EmptyState>Map data unavailable</EmptyState>}</div><DetailPanel selected={selected} onClose={() => setSelected(null)} /></div>
 }
