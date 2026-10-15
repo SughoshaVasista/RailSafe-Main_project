@@ -18,6 +18,8 @@
 .topbar-brand, .topbar-user { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .topbar-brand b { font-family: var(--font-heading); }
 .topbar-user { color: var(--muted); font-size: 12px; }
+.city-filter { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; text-transform: uppercase; }
+.city-filter select { min-height: 36px; padding: 6px 9px; }
 .icon { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); background: transparent; }
 .page { width: 100%; max-width: 1500px; margin: auto; padding: 22px 14px calc(76px + env(safe-area-inset-bottom)); }
 .page-header { margin-bottom: 18px; }

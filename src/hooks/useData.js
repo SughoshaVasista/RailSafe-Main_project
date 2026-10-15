@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
-import { getAIDetection, getAlerts, getDashboardEventLog, getDashboardSummary, getDevices, getDeviceDiagnostics, getDeviceSensors, getModelStatus, getSimulationState, getSwitchStatus, getTasks, getTracks, getTrains, getWorkers } from '../services/api'
+import { getAIDetection, getAlerts, getDashboardEventLog, getDevices, getDeviceDiagnostics, getDeviceSensors, getModelStatus, getSimulationState, getSwitchStatus, getTasks, getTracks, getTrains, getWorkers } from '../services/api'
+import { useCity } from '../context/CityContext'
+import { cityOf } from '../utils/city'
 
 const unwrap = (value) => value?.items ?? value?.data ?? value ?? []
+const cityMatches = (item, city) => city === 'all' || cityOf(item) === city
 
 function useLiveResource({ path, fetcher, deps = [], transform = unwrap }) {
   const [refreshToken, setRefreshToken] = useState(0)
@@ -20,8 +23,8 @@ function useLiveResource({ path, fetcher, deps = [], transform = unwrap }) {
   return { ...state, refresh: () => setRefreshToken((value) => value + 1) }
 }
 
-export const useAlerts = (filters = {}) => useLiveResource({ path: 'alerts', fetcher: () => getAlerts(filters), deps: [JSON.stringify(filters)], transform: (value) => unwrap(value).filter((item) => Object.entries(filters).every(([key, expected]) => { if (!expected) return true; if (key === 'type') return (item.type || item.defect || item.class) === expected; return item[key] === expected })) })
-export const useDashboardSummary = () => useLiveResource({ path: 'dashboard/summary', fetcher: getDashboardSummary, deps: [], transform: (value) => value?.summary ?? value })
+export const useAlerts = (filters = {}) => { const { city } = useCity(); return useLiveResource({ path: 'alerts', fetcher: () => getAlerts(filters), deps: [JSON.stringify(filters), city], transform: (value) => unwrap(value).filter((item) => cityMatches(item, city)).filter((item) => Object.entries(filters).every(([key, expected]) => { if (!expected) return true; if (key === 'type') return (item.type || item.defect || item.class) === expected; return item[key] === expected })) }) }
+export const useDashboardSummary = () => { const { city } = useCity(); const alerts = useAlerts(); const tasks = useTasks(); const devices = useDevices(); const items = Array.isArray(alerts.data) ? alerts.data : []; const taskItems = Array.isArray(tasks.data) ? tasks.data : []; const deviceItems = Array.isArray(devices.data) ? devices.data : []; return { data: { active_alerts: items.filter((item) => ['ACTIVE', 'ACKNOWLEDGED', 'ASSIGNED', 'UNDER_REPAIR'].includes(item.status)).length, s3_alerts: items.filter((item) => item.severity === 'S3').length, s2_alerts: items.filter((item) => item.severity === 'S2').length, s1_alerts: items.filter((item) => item.severity === 'S1').length, pending_tasks: taskItems.filter((item) => item.status !== 'COMPLETED').length, online_devices: deviceItems.filter((item) => item.status === 'ONLINE').length, total_devices: deviceItems.length, city }, loading: alerts.loading || tasks.loading || devices.loading, error: alerts.error || tasks.error || devices.error, updatedAt: Math.max(alerts.updatedAt || 0, tasks.updatedAt || 0, devices.updatedAt || 0) } }
 export const useSwitchStatus = () => useLiveResource({ path: 'switch/status', fetcher: getSwitchStatus, deps: [] })
 export const useSensorsLatest = (deviceId) => useLiveResource({ path: deviceId ? `devices/${deviceId}/sensors` : null, fetcher: () => getDeviceSensors(deviceId), deps: [deviceId] })
 export const useSensorHistory = (deviceId, windowName = '24h') => useLiveResource({ path: null, fetcher: () => getDeviceSensors(deviceId, { history: true, window: windowName }), deps: [deviceId, windowName] })
@@ -29,8 +32,8 @@ export const useDeviceDiagnostics = (deviceId) => useLiveResource({ path: device
 export const useModelStatus = () => useLiveResource({ path: null, fetcher: getModelStatus, deps: [], transform: (value) => value?.model ?? value })
 export const useAIDetection = () => useLiveResource({ path: null, fetcher: getAIDetection, deps: [], transform: (value) => value?.detection ?? value })
 export const useSimulationState = () => useLiveResource({ path: null, fetcher: getSimulationState, deps: [] })
-export const useWorkers = () => useLiveResource({ path: null, fetcher: getWorkers, deps: [] })
-export const useDevices = () => useLiveResource({ path: 'devices', fetcher: getDevices, deps: [] })
-export const useTasks = (workerId) => useLiveResource({ path: workerId ? `tasks/${workerId}` : null, fetcher: () => getTasks(workerId ? { worker_id: workerId } : {}), deps: [workerId] })
-export const useMapData = () => useLiveResource({ path: null, fetcher: () => Promise.all([getTracks(), getTrains()]).then(([tracks, trains]) => ({ tracks: unwrap(tracks), trains: unwrap(trains) })), deps: [], transform: (value) => value })
+export const useWorkers = () => { const { city } = useCity(); return useLiveResource({ path: null, fetcher: getWorkers, deps: [city], transform: (value) => unwrap(value).filter((item) => cityMatches(item, city)) }) }
+export const useDevices = () => { const { city } = useCity(); return useLiveResource({ path: 'devices', fetcher: getDevices, deps: [city], transform: (value) => unwrap(value).filter((item) => cityMatches(item, city)) }) }
+export const useTasks = (workerId) => { const { city } = useCity(); return useLiveResource({ path: workerId ? `tasks/${workerId}` : null, fetcher: () => getTasks(workerId ? { worker_id: workerId } : {}), deps: [workerId, city], transform: (value) => unwrap(value).filter((item) => cityMatches(item, city)) }) }
+export const useMapData = () => { const { city } = useCity(); return useLiveResource({ path: null, fetcher: () => Promise.all([getTracks(), getTrains()]).then(([tracks, trains]) => ({ tracks: unwrap(tracks).filter((item) => cityMatches(item, city)), trains: unwrap(trains).filter((item) => cityMatches(item, city)) })), deps: [city], transform: (value) => value }) }
 export const useEventLog = (since = '') => useLiveResource({ path: null, fetcher: () => getDashboardEventLog({ since }), deps: [since], transform: (value) => unwrap(value).sort((a, b) => new Date(b.timestamp || b.created_at || 0) - new Date(a.timestamp || a.created_at || 0)) })
