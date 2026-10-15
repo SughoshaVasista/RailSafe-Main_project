@@ -16,11 +16,14 @@ api.interceptors.request.use((config) => {
 })
 
 api.interceptors.response.use((response) => response, (error) => {
-  if (error.response?.status === 401) unauthorizedHandler?.()
+  // Read endpoints can be unavailable while the UI is still usable (for example
+  // when changing the city before the backend is connected). Keep the session
+  // intact for those failures; authenticated writes still clear expired sessions.
+  if (error.response?.status === 401 && !error.config?.suppressUnauthorizedLogout) unauthorizedHandler?.()
   return Promise.reject(error)
 })
 
-const get = (path, params) => api.get(path, { params }).then(({ data }) => data)
+const get = (path, params) => api.get(path, { params, suppressUnauthorizedLogout: true }).then(({ data }) => data)
 const post = (path, body) => api.post(path, body).then(({ data }) => data)
 
 export const loginRequest = (credentials) => post('/auth/login', credentials)
