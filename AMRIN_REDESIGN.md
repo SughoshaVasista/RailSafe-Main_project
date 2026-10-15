@@ -192,6 +192,8 @@ Statuses: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`. The agent edits this table.
 | 9 | Standalone simulator | DONE | 78fe727 |
 | 10 | QA, thresholds and docs | DONE | cf457b9 |
 
+Follow-up execution for the user-reported omissions reopens only the affected phase(s); earlier commits remain intact.
+
 ---
 
 ## 4. Phases
