@@ -6,6 +6,7 @@ import Lamp from '../components/Lamp'
 import Panel from '../components/Panel'
 import { EmptyState, ErrorState, LoadingState } from '../components/StateMessage'
 import { useDeviceDiagnostics, useDevices, useModelStatus, useSensorsLatest } from '../hooks/useData'
+import { TEMPERATURE_FLAG_C } from '../config/thresholds'
 
 const sensorTypes = [['Camera', '30 FPS'], ['Ultrasonic', '20 Hz'], ['Accelerometer', '100 Hz'], ['Temperature', '1 Hz'], ['GPS', '1 Hz']]
 const explanations = { ONLINE: 'Sensor is reporting within its expected interval.', DEGRADED: 'Sensor is reporting, but quality is reduced.', ERROR: 'Sensor reported an error.', TIMEOUT: 'No response arrived before the timeout.', INVALID_READING: 'The latest value failed validation.', MISSING_DATA: 'No reading has arrived.' }
@@ -34,10 +35,10 @@ function health(sensor) {
 }
 
 function SensorCard({ title, rate, sensor, points }) {
-  const status = health(sensor); const raw = sensor || {}; const interpreted = raw.interpreted_value ?? raw.interpreted ?? raw.classification
+  const status = health(sensor); const raw = sensor || {}; const interpreted = raw.interpreted_value ?? raw.interpreted ?? raw.classification; const temperatureFlag = title === 'Temperature' && typeof raw.value === 'number' && raw.value > TEMPERATURE_FLAG_C
   const latest = packetTime(raw); const age = latest ? Math.max(0, Math.floor((Date.now() - new Date(latest).getTime()) / 1000)) : null
   const rows = title === 'Accelerometer' ? [['X', noData(raw.x)], ['Y', noData(raw.y)], ['Z', noData(raw.z)], ['Vibration', noData(raw.vibration || raw.vibration_state)], ['Anomaly score', noData(raw.anomaly_score)]] : title === 'GPS' ? [['Latitude', noData(raw.lat ?? raw.latitude)], ['Longitude', noData(raw.lng ?? raw.longitude)], ['Accuracy', raw.accuracy === undefined ? 'NO DATA' : `${raw.accuracy} m`], ['Satellites', noData(raw.satellites)], ['Fix type', noData(raw.fix_type ?? raw.fixType)]] : [['Raw value', noData(raw.raw ?? raw.value ?? raw.reading)], ['Interpreted', noData(interpreted)]]
-  return <article className="hardware-sensor-card"><div className="hardware-card-head"><div><p className="eyebrow">{rate}</p><h2>{title}</h2></div><Lamp severity={status.toLowerCase()} label={status} /></div><p className="sensor-explanation">{explanations[status] || 'Sensor status is not available.'}</p><strong className="hardware-value">{title === 'Accelerometer' ? noData(raw.value) : title === 'GPS' ? `${noData(raw.lat ?? raw.latitude)}, ${noData(raw.lng ?? raw.longitude)}` : noData(raw.value ?? raw.reading ?? raw.raw)}</strong><div className="hardware-age">last received {age === null ? 'NO DATA' : `${age}s ago`}</div><div className="hardware-details">{rows.map(([label, value]) => <div key={label}><span>{label}</span><code>{value}</code></div>)}</div><Sparkline points={points} /></article>
+  return <article className="hardware-sensor-card"><div className="hardware-card-head"><div><p className="eyebrow">{rate}</p><h2>{title}</h2></div><Lamp severity={temperatureFlag ? 'warning' : status.toLowerCase()} label={temperatureFlag ? 'DEGRADED' : status} /></div><p className="sensor-explanation">{temperatureFlag ? `Temperature above ${TEMPERATURE_FLAG_C} C.` : explanations[status] || 'Sensor status is not available.'}</p><strong className="hardware-value">{title === 'Accelerometer' ? noData(raw.value) : title === 'GPS' ? `${noData(raw.lat ?? raw.latitude)}, ${noData(raw.lng ?? raw.longitude)}` : noData(raw.value ?? raw.reading ?? raw.raw)}</strong><div className="hardware-age">last received {age === null ? 'NO DATA' : `${age}s ago`}</div><div className="hardware-details">{rows.map(([label, value]) => <div key={label}><span>{label}</span><code>{value}</code></div>)}</div><Sparkline points={points} /></article>
 }
 
 function ModelStatus() {

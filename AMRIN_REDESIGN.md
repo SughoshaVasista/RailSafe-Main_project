@@ -190,7 +190,7 @@ Statuses: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`. The agent edits this table.
 | 7 | Alerts and Map | DONE | 0c465cc |
 | 8 | Worker experience | DONE | 1e2eca5 |
 | 9 | Standalone simulator | DONE | 78fe727 |
-| 10 | QA, thresholds and docs | TODO | |
+| 10 | QA, thresholds and docs | DONE | cf457b9 |
 
 ---
 
@@ -481,3 +481,5 @@ anti-pattern audit result, errors (for `BLOCKED`).
 - Phase 8: worker experience. Added light-first worker defaults, city/name context, next-job emphasis, 48px navigation links, Google Maps navigation when coordinates exist, and retained the existing status/evidence flow with file capture and notes. `npm run build` passed.
 
 - Phase 9: standalone simulator. Added the frontend JS decision engine and five Vitest scenarios, moved `/simulation` outside auth, removed the legacy live/simulation API calls and page files, and added the no-live-data track schematic with scenario controls and decision rules. `npm run test` passed (5 tests) and `npm run build` passed. The optional POST decision toggle is intentionally omitted because this standalone route never calls live endpoints.
+
+- Phase 10: QA, thresholds and docs. Added `src/config/thresholds.js`, wired the minimum safe distance and temperature threshold, removed unused merged page files, updated README/plan/env documentation, and ran the final audits. `npm run test` passed (5 tests); `npm run build` passed; AMRIN/AppMode grep was clean; forbidden gradients, blur, shadows, large radii, old fonts, and marketing copy were clean. The `git diff --stat main -- mock-server train-sim` check still reports the pre-existing demo seed in `mock-server/server.py` inherited from the starting `mode-1` branch; no mock-server or train-sim file was edited during this redesign run.

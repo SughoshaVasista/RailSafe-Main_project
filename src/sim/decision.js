@@ -1,4 +1,6 @@
-export const MIN_SAFE_DISTANCE = 25
+import { MIN_SAFE_DISTANCE } from '../config/thresholds'
+
+export { MIN_SAFE_DISTANCE }
 export const DEFECT_SAFETY = { NONE: 1, S1: .8, S2: .4, S3: 0 }
 
 const distanceOf = (state, track) => { const value = state[`distance_to_switch_${track}`] ?? state.distance_to_switch; const parsed = Number(value); return Number.isFinite(parsed) ? parsed : Infinity }

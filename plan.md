@@ -1,5 +1,14 @@
 # AMRIN Railway Simulation and Frontend Integration Plan
 
+## Frontend redesign status
+
+The AMRIN frontend redesign is executed phase-by-phase on `redesign/amrin-ui`. The active client
+uses IBM Plex typography, persisted light/dark themes, city-aware filtering, role-aware auth,
+flat operations navigation, shared severity/confidence chips, and a public `/simulation` route.
+Thresholds are centralized in `src/config/thresholds.js`; demo auth and city data are controlled
+by `VITE_DEMO_AUTH` and `VITE_DEMO_CITIES`. This software is simulation and decision support, not
+live railway signalling control.
+
 ## Goal
 
 Extend the cloned `ShreeVidya-HS/frontend` React/Vite application with a reproducible railway-switching simulation package. The simulation will support SUMO when available, fall back to a pure-Python position loop when SUMO cannot be installed or verified within the stated time box, emit the agreed `SWITCH_DECISION` schema, POST decisions to a local Flask stub, and expose the decision data to the existing frontend UI. The implementation will preserve the frontend’s current prototype behavior while replacing hardcoded decision-rule presentation with data-driven rules where practical.

@@ -14,7 +14,7 @@ Run the development API separately with `python mock-server/server.py`. It liste
 
 ## Environment
 
-`.env.example` documents every client-side `VITE_` variable: `VITE_API_BASE_URL`, `VITE_MAP_LAT`, `VITE_MAP_LNG`, `VITE_MAPTILER_KEY`, and the seven `VITE_FIREBASE_*` settings. To use the real backend, set `VITE_API_BASE_URL` in `.env` to its `/api` URL and restart Vite. Axios attaches the persisted auth token; the backend must re-check role authorization on every endpoint.
+`.env.example` documents every client-side `VITE_` variable, including `VITE_DEMO_AUTH`, `VITE_DEMO_CITIES`, `VITE_ADMIN_INVITE`, `VITE_API_BASE_URL`, map coordinates, `VITE_MAPTILER_KEY`, and the seven `VITE_FIREBASE_*` settings. To use the real backend, set `VITE_API_BASE_URL` in `.env` to its `/api` URL and restart Vite. Axios attaches the persisted auth token; the backend must re-check role authorization on every endpoint.
 
 ## Firebase rules
 
@@ -22,7 +22,7 @@ Run the development API separately with `python mock-server/server.py`. It liste
 
 ## Routes
 
-Admin routes include Command Center, Alerts, Live Map, Tasks, Workers, Hardware, and AI Detection. Workers can access Tasks and the Map only.
+Admin routes include Command Center, Alerts, Live Map, Tasks, Hardware, and AI Detection. Workers can access Tasks and the Map only. `/simulation` is a public standalone decision-support simulator and never uses live endpoints.
 
 ## Demo walkthrough
 
