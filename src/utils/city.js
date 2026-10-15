@@ -8,7 +8,11 @@ const coordinates = (record = {}) => {
 }
 
 export function cityOf(record = {}) {
-  if (record.city) return record.city
+  if (record.city) {
+    const value = String(record.city).trim().toLowerCase()
+    const match = cities.find((city) => city.id === value || city.name.toLowerCase() === value)
+    if (match) return match.id
+  }
   const point = coordinates(record)
   if (!point) return 'Unassigned'
   let nearest = null
