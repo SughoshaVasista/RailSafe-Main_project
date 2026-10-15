@@ -192,25 +192,6 @@
 .sim-panel { padding: 14px; }
 .sim-panel h2 { margin: 0 0 10px; }
 .scenario-option { display: flex; min-height: 40px; align-items: center; gap: 8px; border-bottom: 1px solid #D9D7D0; }
-.sim-controls button, .speed-button { min-height: 44px; }
-.speed-button { padding: 6px 10px; border: 1px solid #B8B5AD; color: #16181A; background: transparent; }
-.speed-button.selected { border-color: #16181A; font-weight: 700; }
-.sim-train { fill: #16181A; }
-.sim-segment { fill: none; stroke-width: 5; }
-.sim-s1 { stroke: #1D6FB8; }.sim-s2 { stroke: #8A5300; }.sim-s3 { stroke: #B3202F; }
-.sim-severity-label { fill: #16181A; font-family: var(--font-mono); font-size: 11px; }
-.custom-scenario { display: grid; gap: 8px; margin: 8px 0 16px; }
-.custom-scenario fieldset { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; border: 1px solid #B8B5AD; }
-.custom-scenario label { display: grid; gap: 5px; font-size: 11px; }
-.custom-scenario fieldset label:not(:first-of-type) { display: flex; align-items: center; }
-.custom-scenario select, .custom-scenario input[type=number] { min-height: 40px; padding: 6px; }
-.sim-score-track { height: 6px; margin: 7px 0; background: #D9D7D0; }
-.sim-score-track i { display: block; height: 100%; background: #16181A; }
-.sim-lamps { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-.sim-lamps span { padding: 7px 9px; border: 1px solid #B8B5AD; color: #5E646B; font-size: 11px; }
-.sim-lamps span.active { border-color: #16181A; color: #16181A; background: #D9D7D0; font-weight: 700; }
-.sim-event-log { padding-left: 20px; font-family: var(--font-mono); font-size: 10px; }
-.sim-event-log li { padding: 5px 0; border-bottom: 1px solid #D9D7D0; }
 .sim-rules { margin-top: 14px; border-top: 1px solid #B8B5AD; }
 .sim-rules p { display: flex; gap: 8px; padding: 8px 0; margin: 0; border-bottom: 1px solid #D9D7D0; font-size: 12px; }
 .pass, .fail { min-width: 38px; font-family: var(--font-mono); font-size: 10px; font-weight: 700; }
