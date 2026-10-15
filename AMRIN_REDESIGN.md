@@ -186,7 +186,7 @@ Statuses: `TODO`, `IN_PROGRESS`, `DONE`, `BLOCKED`. The agent edits this table.
 | 3 | Merge pages and clean routes | DONE | fd272ca |
 | 4 | Login and sign-up | DONE | 830c845 |
 | 5 | App shell | DONE | 3cb75c7 |
-| 6 | Command Center | TODO | |
+| 6 | Command Center | DONE | 5c4e73d |
 | 7 | Alerts and Map | TODO | |
 | 8 | Worker experience | TODO | |
 | 9 | Standalone simulator | TODO | |
@@ -473,3 +473,5 @@ anti-pattern audit result, errors (for `BLOCKED`).
 - Phase 4: login and sign-up. Added AMRIN auth layout, email/password sign-in with show-password and remember-me controls, sign-up with city and role, pending approval messaging, real `/auth/register` first with a `VITE_DEMO_AUTH`-gated salted SHA-256 local fallback, and the `VITE_ADMIN_INVITE` flag. `npm run build` passed. The existing backend has no register/approval endpoint, so approval storage remains DEMO ONLY until the backend supplies it.
 
 - Phase 5: app shell. Added remembered collapsible desktop navigation, topbar search routing to `/alerts?q=`, selected-city filter, S3 shortcut, theme control, and role-aware six-item admin navigation. `npm run build` passed. The user menu remains compact in the topbar; logout and theme actions are directly available.
+
+- Phase 6: Command Center. Replaced the dashboard KPI cards with a flat readout strip, added the selected-city S3 banner and actions, compact mobile tabs, desktop map/feed grid, and a mono status footer. `npm run build` passed.

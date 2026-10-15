@@ -42,6 +42,14 @@
 .kpi { min-width: 0; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
 .kpi span { display: block; color: var(--muted); font-family: var(--font-heading); font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
 .kpi strong { display: block; margin-top: 8px; font-size: 24px; }
+.readout-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: 1px solid var(--border); background: var(--surface); }
+.readout { min-width: 0; padding: 10px; border-right: 1px solid var(--border); }
+.readout:last-child { border-right: 0; }
+.readout span { display: block; color: var(--muted); font-family: var(--font-heading); font-size: 10px; text-transform: uppercase; }
+.readout strong { display: block; margin-top: 5px; font-family: var(--font-mono); font-size: 20px; }
+.s3-banner { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; padding: 9px 12px; border: 1px solid var(--signal-s3); color: var(--signal-s3-text); background: var(--surface-2); }
+.s3-banner a { font-family: var(--font-mono); font-size: 11px; }
+.dashboard-status { display: block; margin-top: 14px; padding-top: 9px; border-top: 1px solid var(--border); color: var(--muted); font-family: var(--font-mono); font-size: 11px; }
 .state-message { display: flex; min-height: 88px; align-items: center; justify-content: center; gap: 9px; padding: 18px; color: var(--muted); font-size: 13px; text-align: center; }
 .alert-row, .admin-row, .event-log-row { border-bottom: 1px solid var(--border); }
 .alert-row { display: grid; gap: 8px; min-width: 0; padding: 12px 14px; }
