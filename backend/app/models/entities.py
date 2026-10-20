@@ -14,6 +14,7 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -182,6 +183,13 @@ class MaintenanceTask(TimestampMixin, Base):
         CheckConstraint("priority IS NULL OR priority IN ('S1', 'S2', 'S3')", name="ck_tasks_priority"),
         Index("ix_tasks_worker_status", "assigned_worker_user_id", "status"),
         Index("ix_tasks_alert_status", "alert_id", "status"),
+        Index(
+            "uq_maintenance_tasks_alert_open",
+            "alert_id",
+            unique=True,
+            sqlite_where=text("status != 'COMPLETED'"),
+            postgresql_where=text("status != 'COMPLETED'"),
+        ),
     )
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)

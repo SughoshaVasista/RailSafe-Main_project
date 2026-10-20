@@ -1,6 +1,6 @@
 # AMRIN FastAPI backend
 
-This backend provides the persistent SQLAlchemy schema, demo seed, and server-side authentication/account approval. `mock-server/server.py` remains a separate in-memory demo. The production-style API currently includes health, authentication, pending-user approval, and worker-list endpoints; alert/task/device APIs are implemented in later phases.
+This backend provides the persistent SQLAlchemy schema, demo seed, server-side authentication/account approval, and the alert/task maintenance workflow. `mock-server/server.py` remains a separate in-memory demo. Device, sensor, map, dashboard, switch-decision, model-status, and AI read APIs follow in later phases.
 
 ## Windows PowerShell setup
 
@@ -35,6 +35,12 @@ The API listens on `http://127.0.0.1:8000`; health is available at `/api/health`
 - `GET /api/users/pending`, `POST /api/users/{user_id}/approve`, `POST /api/users/{user_id}/reject`, and `GET /api/workers` require an approved active admin account.
 - Approval creates a stable worker ID. Rejected/pending users cannot sign in. API authorization checks the account's current database role and approval state for each request, so disabling or changing an account invalidates its access immediately.
 - Public registration passwords require at least 10 characters; CLI administrator passwords require at least 12. Passwords use Argon2 hashes and are never included in API responses.
+
+## Alerts, tasks, and evidence
+
+Alert actions are administrator-only, validated against explicit lifecycle transitions, and written with `AlertHistory` and `EventLog` records. Task lists are limited to the authenticated worker; admins can list/filter all tasks. Task completion requires at least one repair evidence image. The database has a partial unique index preventing multiple open tasks for the same alert.
+
+Evidence accepts JPEG, PNG, GIF, and WebP only. The upload is bounded by `MAX_CONTENT_LENGTH`, its file signature must match its declared MIME type, its stored name is randomized, and it is stored under `UPLOAD_FOLDER`. The private `GET /api/tasks/{task_id}/evidence/{evidence_id}` route checks task ownership/admin role; it never accepts a filesystem path or token in a URL. API clients must send the Bearer token in the `Authorization` header when retrieving an evidence image.
 
 ## Tests
 

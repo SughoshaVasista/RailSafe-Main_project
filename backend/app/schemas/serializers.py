@@ -150,6 +150,7 @@ def serialize_task_evidence(evidence: TaskEvidence) -> dict[str, Any]:
         "evidence_type": evidence.evidence_type,
         "notes": evidence.notes,
         "uploaded_by_user_id": evidence.uploaded_by_user_id,
+        "url": f"/api/tasks/{evidence.task_id}/evidence/{evidence.id}",
         "created_at": _iso(evidence.created_at),
     }
 

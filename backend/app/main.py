@@ -11,6 +11,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from app.config import Settings
 from app.api.routers.auth import router as auth_router
+from app.api.routers.operations import router as operations_router
 from app.api.routers.users import router as users_router
 from app.db.session import build_engine, build_session_factory, get_db
 from app.errors import AppError
@@ -34,6 +35,7 @@ def create_app(settings: Settings | Mapping[str, Any] | None = None) -> FastAPI:
     application.state.engine = build_engine(resolved_settings.database_url)
     application.state.session_factory = build_session_factory(application.state.engine)
     application.include_router(auth_router)
+    application.include_router(operations_router)
     application.include_router(users_router)
 
     application.add_middleware(
@@ -43,6 +45,24 @@ def create_app(settings: Settings | Mapping[str, Any] | None = None) -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type", "X-ML-API-Key"],
     )
+
+    @application.middleware("http")
+    async def enforce_request_size(request: Request, call_next):
+        content_length = request.headers.get("content-length")
+        if content_length is not None:
+            try:
+                too_large = int(content_length) > resolved_settings.max_content_length
+            except ValueError:
+                return JSONResponse(
+                    status_code=400,
+                    content={"error": {"code": "invalid_content_length", "message": "Content-Length must be an integer"}},
+                )
+            if too_large:
+                return JSONResponse(
+                    status_code=413,
+                    content={"error": {"code": "request_too_large", "message": "Request exceeds the configured size limit"}},
+                )
+        return await call_next(request)
 
     @application.get("/api/health", tags=["health"])
     def health() -> dict[str, str]:
