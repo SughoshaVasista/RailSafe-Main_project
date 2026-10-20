@@ -1,6 +1,6 @@
 # AMRIN FastAPI backend
 
-Phase 1 foundation for the AMRIN REST API. The existing `mock-server/server.py` remains available as a separate, in-memory demo while the API is implemented. The real backend currently exposes only `GET /api/health`; domain records and authentication are added in later phases.
+Persistent SQLAlchemy records and an idempotent demo seed now sit on the Phase 1 FastAPI foundation. The existing `mock-server/server.py` remains available as a separate, in-memory demo while API routes and authentication are added in later phases. The production-style backend currently exposes only `GET /api/health`.
 
 ## Windows PowerShell setup
 
@@ -12,6 +12,8 @@ py -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+alembic upgrade head
+python -m app.cli seed-demo
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
@@ -25,5 +27,7 @@ The default database is a persistent SQLite file under `backend/instance/`. `DAT
 Set-Location .\backend
 py -m pytest
 ```
+
+`python -m app.cli seed-demo` inserts clearly marked development records with stable IDs. It can be run repeatedly without duplicating them. The seeded worker has no password hash and is not a login account; create real accounts in the authentication phase. No model is loaded or inference simulated by the seed.
 
 The test suite uses an isolated temporary SQLite database. Run the existing frontend production build from the repository root with `npm run build`.
