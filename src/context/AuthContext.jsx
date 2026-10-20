@@ -6,8 +6,18 @@ const AUTH_KEY = 'amrin_auth'
 const AuthContext = createContext(null)
 
 const readStoredAuth = () => {
-  const raw = window.localStorage.getItem(AUTH_KEY) || window.sessionStorage.getItem(AUTH_KEY)
-  return raw ? JSON.parse(raw) : null
+  for (const storage of [window.localStorage, window.sessionStorage]) {
+    const raw = storage.getItem(AUTH_KEY)
+    if (!raw) continue
+    try {
+      const value = JSON.parse(raw)
+      if (value && typeof value.token === 'string' && ['admin', 'worker'].includes(value.role)) return value
+    } catch {
+      // Discard malformed persisted auth and continue checking the other store.
+    }
+    storage.removeItem(AUTH_KEY)
+  }
+  return null
 }
 
 export function AuthProvider({ children }) {
