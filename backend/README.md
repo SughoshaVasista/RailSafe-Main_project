@@ -1,6 +1,6 @@
 # AMRIN FastAPI backend
 
-This backend provides the persistent SQLAlchemy schema, demo seed, server-side authentication/account approval, and the alert/task maintenance workflow. `mock-server/server.py` remains a separate in-memory demo. Device, sensor, map, dashboard, switch-decision, model-status, and AI read APIs follow in later phases.
+This backend provides the persistent SQLAlchemy schema, demo seed, server-side authentication/account approval, alert/task maintenance, and the device/sensor/map/dashboard/switch/model/AI read APIs. `mock-server/server.py` remains a separate in-memory demo.
 
 ## Windows PowerShell setup
 
@@ -41,6 +41,10 @@ The API listens on `http://127.0.0.1:8000`; health is available at `/api/health`
 Alert actions are administrator-only, validated against explicit lifecycle transitions, and written with `AlertHistory` and `EventLog` records. Task lists are limited to the authenticated worker; admins can list/filter all tasks. Task completion requires at least one repair evidence image. The database has a partial unique index preventing multiple open tasks for the same alert.
 
 Evidence accepts JPEG, PNG, GIF, and WebP only. The upload is bounded by `MAX_CONTENT_LENGTH`, its file signature must match its declared MIME type, its stored name is randomized, and it is stored under `UPLOAD_FOLDER`. The private `GET /api/tasks/{task_id}/evidence/{evidence_id}` route checks task ownership/admin role; it never accepts a filesystem path or token in a URL. API clients must send the Bearer token in the `Authorization` header when retrieving an evidence image.
+
+## Telemetry and simulation reads
+
+Device, sensor, diagnostics, track, train, switch status, dashboard summary/event log, model status, and AI detection routes use database records. Sensor history is bounded to the most recent 1,000 rows and accepts `1h`, `6h`, `24h`, `7d`, and `30d` windows. Map routes are available to approved admins/workers; device/model/dashboard administration reads are admin-only. The model and detection endpoints report no live ML service until an actual integration reports data. Switch decisions are advisory simulation records only and never operate railway equipment. To let `train-sim/controller.py` submit a decision, set `AMRIN_API_TOKEN` in that process to an administrator's Bearer token; it is never put in a URL or checked into source.
 
 ## Tests
 

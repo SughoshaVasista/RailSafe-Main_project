@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 
 import requests
@@ -8,6 +9,7 @@ import requests
 from decision import decide
 
 ENDPOINT = "http://localhost:8000/api/switch/decision"
+API_TOKEN = os.getenv("AMRIN_API_TOKEN", "")
 TRAIN_ID = "train_0"
 SWITCH_EDGE = "entry"
 SWITCH_ID = "switch_0"
@@ -33,7 +35,8 @@ def run(scenario_state: dict) -> dict | None:
                 already_switched = True
                 print("[SWITCH] Rerouted to Track B")
             try:
-                requests.post(ENDPOINT, json=decision, timeout=1).raise_for_status()
+                headers = {"Authorization": f"Bearer {API_TOKEN}"} if API_TOKEN else {}
+                requests.post(ENDPOINT, json=decision, headers=headers, timeout=1).raise_for_status()
             except requests.RequestException as exc:
                 print(f"[WARN] POST failed: {exc}", file=sys.stderr)
     finally:

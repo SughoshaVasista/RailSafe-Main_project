@@ -12,6 +12,7 @@ from starlette.middleware.cors import CORSMiddleware
 from app.config import Settings
 from app.api.routers.auth import router as auth_router
 from app.api.routers.operations import router as operations_router
+from app.api.routers.telemetry import router as telemetry_router
 from app.api.routers.users import router as users_router
 from app.db.session import build_engine, build_session_factory, get_db
 from app.errors import AppError
@@ -36,6 +37,7 @@ def create_app(settings: Settings | Mapping[str, Any] | None = None) -> FastAPI:
     application.state.session_factory = build_session_factory(application.state.engine)
     application.include_router(auth_router)
     application.include_router(operations_router)
+    application.include_router(telemetry_router)
     application.include_router(users_router)
 
     application.add_middleware(

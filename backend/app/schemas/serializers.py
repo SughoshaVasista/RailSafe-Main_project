@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 from app.models import (
@@ -17,7 +17,11 @@ from app.models import (
 
 
 def _iso(value: datetime | None) -> str | None:
-    return value.isoformat() if value is not None else None
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def serialize_user(user: User) -> dict[str, Any]:
@@ -223,12 +227,13 @@ def serialize_train(train: Train) -> dict[str, Any]:
 
 
 def serialize_decision(state: DecisionState) -> dict[str, Any]:
+    payload = state.payload or {}
     return {
         "id": state.id,
         "status": state.status,
         "action": state.action,
         "action_level": state.action_level,
-        "train_id": state.train_id,
+        "train_id": state.train_id or payload.get("train_id"),
         "switch_id": state.switch_id,
         "target_track": state.target_track,
         "confidence": state.confidence,
@@ -237,8 +242,9 @@ def serialize_decision(state: DecisionState) -> dict[str, Any]:
         "longitude": state.longitude,
         "rules_checked": state.rules_checked or [],
         "raw_scores": state.raw_scores or {},
-        "payload": state.payload or {},
+        "payload": payload,
         "source": state.source,
+        "demo": state.source == "demo",
         "updated_at": _iso(state.updated_at),
     }
 
@@ -251,6 +257,8 @@ def serialize_event_log(item: EventLog) -> dict[str, Any]:
         "object_type": item.object_type,
         "object_id": item.object_id,
         "summary": item.summary,
+        "message": item.summary,
+        "actor": item.actor.name if item.actor else "SYSTEM",
         "details": item.details,
         "source": item.source,
         "timestamp": _iso(item.timestamp),

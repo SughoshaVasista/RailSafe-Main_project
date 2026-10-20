@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile, status
 from fastapi.responses import FileResponse
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
@@ -60,12 +60,15 @@ def _visible_task(task: MaintenanceTask, user: User) -> None:
         raise AppError(403, "forbidden", "This task is assigned to another worker")
 
 
-def _get_alert(db: Session, alert_id: str) -> Alert:
+def _get_alert(db: Session, alert_id: str, user: User | None = None) -> Alert:
     alert = db.scalar(
         select(Alert).options(joinedload(Alert.assigned_worker)).where(Alert.id == alert_id)
     )
     if alert is None:
         raise AppError(404, "alert_not_found", "Alert was not found")
+    if user is not None and not _admin(user):
+        if alert.assigned_worker_user_id != user.id and (not user.city or alert.city != user.city):
+            raise AppError(404, "alert_not_found", "Alert was not found")
     return alert
 
 
@@ -157,10 +160,15 @@ def list_alerts(
     to: datetime | None = None,
     limit: int = Query(default=200, ge=1, le=500),
     offset: int = Query(default=0, ge=0),
-    _user: User = Depends(any_user),
+    user: User = Depends(any_user),
     db: Session = Depends(get_db),
 ) -> dict[str, list[dict]]:
     statement = select(Alert).options(joinedload(Alert.assigned_worker))
+    if not _admin(user):
+        if user.city:
+            statement = statement.where(or_(func.lower(Alert.city) == user.city.lower(), Alert.assigned_worker_user_id == user.id))
+        else:
+            statement = statement.where(Alert.assigned_worker_user_id == user.id)
     if severity and severity.upper() not in {"ALL", "ANY"}:
         normalized = severity.upper()
         if normalized not in {"S1", "S2", "S3"}:
@@ -186,8 +194,8 @@ def list_alerts(
 
 
 @router.get("/alerts/{alert_id}")
-def get_alert(alert_id: str, _user: User = Depends(any_user), db: Session = Depends(get_db)) -> dict:
-    return serialize_alert(_get_alert(db, alert_id))
+def get_alert(alert_id: str, user: User = Depends(any_user), db: Session = Depends(get_db)) -> dict:
+    return serialize_alert(_get_alert(db, alert_id, user))
 
 
 @router.post("/alerts/{alert_id}/acknowledge")
@@ -290,11 +298,10 @@ def change_alert_priority(
 @router.get("/alerts/{alert_id}/history")
 def get_alert_history(
     alert_id: str,
-    _user: User = Depends(any_user),
+    user: User = Depends(any_user),
     db: Session = Depends(get_db),
 ) -> dict[str, list[dict]]:
-    if db.get(Alert, alert_id) is None:
-        raise AppError(404, "alert_not_found", "Alert was not found")
+    _get_alert(db, alert_id, user)
     entries = db.scalars(
         select(AlertHistory)
         .options(joinedload(AlertHistory.actor))

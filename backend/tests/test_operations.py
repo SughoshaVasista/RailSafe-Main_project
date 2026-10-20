@@ -60,6 +60,9 @@ def test_alert_filters_detail_history_and_admin_actions(operations_client) -> No
     response = client.get("/api/alerts", params={"severity": "S3", "city": "bengaluru", "type": "crack"}, headers=worker)
     assert response.status_code == 200
     assert [item["id"] for item in response.json()["items"]] == ["ALT-DETECTED"]
+    worker_alerts = client.get("/api/alerts", headers=worker)
+    assert "ALT-OTHER" not in {item["id"] for item in worker_alerts.json()["items"]}
+    assert client.get("/api/alerts/ALT-OTHER", headers=worker).status_code == 404
     assert client.get("/api/alerts", params={"severity": "S9"}, headers=worker).status_code == 422
     assert client.get("/api/alerts/missing", headers=admin).status_code == 404
     assert client.post("/api/alerts/ALT-DETECTED/acknowledge", headers=worker).status_code == 403
