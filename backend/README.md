@@ -25,7 +25,7 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 
 `create-admin` prompts for a name, email, username, and password. The password is entered with hidden terminal input and is never printed. It refuses to create an account if any administrator already exists. Do not use the seeded worker as a login account; it intentionally has no password hash. `seed-demo` is idempotent: a second run inserts no duplicate sample records.
 
-The API listens on `http://127.0.0.1:8000`; health is available at `/api/health`. SQLite is the persistent local default under `backend/instance/`. `DATABASE_URL` can use a PostgreSQL SQLAlchemy URL when the matching driver is installed. `JWT_ACCESS_TOKEN_MINUTES`, `CORS_ORIGINS`, `UPLOAD_FOLDER`, `MAX_CONTENT_LENGTH`, `ENVIRONMENT`, and `ML_INGEST_TOKEN` are configurable through `backend/.env` or process environment.
+The API listens on `http://127.0.0.1:8000`; health is available at `/api/health`. SQLite is the persistent local default under `backend/instance/`. `DATABASE_URL` can use a PostgreSQL SQLAlchemy URL when the matching driver is installed. `JWT_ACCESS_TOKEN_MINUTES`, `CORS_ORIGINS`, `UPLOAD_FOLDER`, `MAX_CONTENT_LENGTH`, `ENVIRONMENT`, `ML_INGEST_TOKEN`, and `SENSOR_INGEST_TOKEN` are configurable through `backend/.env` or process environment. `SENSOR_INGEST_TOKEN` enables Raspberry Pi sensor ingestion; see [the simulator telemetry setup](../docs/raspberry-pi-telemetry.md).
 
 ## Authentication behavior
 
@@ -33,6 +33,7 @@ The API listens on `http://127.0.0.1:8000`; health is available at `/api/health`
 - `POST /api/auth/register` accepts the current signup shape. Every new account is a pending worker. Requests for `operator` or `admin` are recorded as requested roles for audit but never grant privileges.
 - `GET /api/auth/me` validates the token and returns safe account fields.
 - `GET /api/users/pending`, `POST /api/users/{user_id}/approve`, `POST /api/users/{user_id}/reject`, and `GET /api/workers` require an approved active admin account.
+- `GET /api/users`, `POST /api/users`, and `PATCH /api/users/{user_id}/status` also require an approved active admin. Admin-created administrator and worker accounts are approved immediately; passwords use the existing Argon2 hash, and account changes are recorded in the event log. The UI is at `/users` in the admin dashboard. Public signup still creates pending workers only.
 - Approval creates a stable worker ID. Rejected/pending users cannot sign in. API authorization checks the account's current database role and approval state for each request, so disabling or changing an account invalidates its access immediately.
 - Public registration passwords require at least 10 characters; CLI administrator passwords require at least 12. Passwords use Argon2 hashes and are never included in API responses.
 

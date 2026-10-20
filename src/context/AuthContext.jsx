@@ -43,7 +43,7 @@ export function AuthProvider({ children }) {
       if (import.meta.env.VITE_DEMO_AUTH !== 'true') throw error
       result = await loginDemo(credentials.username, credentials.password)
     }
-    const nextAuth = { token: result.token, role: result.role, name: result.name, worker_id: result.worker_id, city: result.city }
+    const nextAuth = { token: result.token, id: result.id, role: result.role, name: result.name, worker_id: result.worker_id, city: result.city }
     const storage = remember ? window.localStorage : window.sessionStorage
     window.localStorage.removeItem(AUTH_KEY)
     window.sessionStorage.removeItem(AUTH_KEY)

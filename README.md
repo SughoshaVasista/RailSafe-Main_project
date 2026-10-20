@@ -37,7 +37,7 @@ Restart Vite after changing `.env`. Keep `ML_INGEST_TOKEN`, JWT secrets, and all
 
 ## Local demo mode
 
-`mock-server/server.py` is a separate in-memory UI demo server. Run it instead of FastAPI when intentionally using the mock-data workflow and demo auth. Its seed resets on restart; it is not persistent or suitable for railway operations. `/simulation` is a standalone decision-support simulation and does not require a live ML service or railway connection.
+`mock-server/server.py` is a separate in-memory UI demo server. Run it instead of FastAPI when intentionally using the mock-data workflow and demo auth. Its seed resets on restart; it is not persistent or suitable for railway operations. `/simulation/simulator` is a standalone decision-support simulation and does not require a live ML service or railway connection. `/simulator` and `/simulation` redirect to that standalone page.
 
 ## Tests and build
 
@@ -53,4 +53,6 @@ SQLite is the local persistent default in `backend/instance/`; set backend `DATA
 
 ## Main routes
 
-The React app includes Command Center, Alerts, Live Map, Tasks, Hardware, and AI Detection. Access is role-gated by the API and UI. See [backend setup and API behavior](backend/README.md) and the [implementation handoff](docs/implementation-handoff.md).
+The public site is available at `/`, `/about`, `/how-it-works`, `/technology`, and `/contact`. These pages use a separate public layout and do not require authentication. The existing operational app includes Command Center, Alerts, Live Map, Tasks, Hardware, AI Detection, and the administrator-only Manage Users page at `/users`; access is role-gated by the API and UI. The simulator remains at `/simulation/simulator` (with `/simulator` and `/simulation` redirecting to it).
+
+The public site describes the verified project stack and current integration boundaries. Team phone and email contacts are listed on the Contact page; institution details and a message submission endpoint are not configured. Physical device feeds and model inference still require configuration or a separate service. See [backend setup and API behavior](backend/README.md) and the [implementation handoff](docs/implementation-handoff.md).

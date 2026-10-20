@@ -179,7 +179,7 @@ class SensorReading(Base):
 class MaintenanceTask(TimestampMixin, Base):
     __tablename__ = "maintenance_tasks"
     __table_args__ = (
-        CheckConstraint("status IN ('ASSIGNED', 'ACCEPTED', 'IN_PROGRESS', 'COMPLETED')", name="ck_tasks_status"),
+        CheckConstraint("status IN ('ASSIGNED', 'ACCEPTED', 'IN_PROGRESS', 'AWAITING_REVIEW', 'COMPLETED')", name="ck_tasks_status"),
         CheckConstraint("priority IS NULL OR priority IN ('S1', 'S2', 'S3')", name="ck_tasks_priority"),
         Index("ix_tasks_worker_status", "assigned_worker_user_id", "status"),
         Index("ix_tasks_alert_status", "alert_id", "status"),
@@ -194,10 +194,13 @@ class MaintenanceTask(TimestampMixin, Base):
 
     id: Mapped[str] = mapped_column(String(64), primary_key=True)
     alert_id: Mapped[str] = mapped_column(ForeignKey("alerts.id", ondelete="RESTRICT"), nullable=False)
-    assigned_worker_user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="RESTRICT"), nullable=False)
+    assigned_worker_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     status: Mapped[str] = mapped_column(String(24), default="ASSIGNED", nullable=False)
     priority: Mapped[str | None] = mapped_column(String(2))
     admin_notes: Mapped[str | None] = mapped_column(Text)
+    review_status: Mapped[str | None] = mapped_column(String(24))
+    review_notes: Mapped[str | None] = mapped_column(Text)
+    review_requested_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     source: Mapped[str] = mapped_column(String(32), default="unknown", nullable=False)
 
     alert: Mapped[Alert] = relationship(back_populates="tasks")

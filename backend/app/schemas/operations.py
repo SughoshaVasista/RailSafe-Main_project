@@ -27,6 +27,11 @@ class TaskStatusRequest(BaseModel):
     notes: str | None = Field(default=None, max_length=4000)
 
 
+class TaskReviewRequest(BaseModel):
+    decision: Literal["approve", "request_changes"]
+    notes: str | None = Field(default=None, max_length=4000)
+
+
 class EvidenceMetadata(BaseModel):
     notes: str | None = None
     evidence_type: Literal["before", "after", "repair", "other"] = "repair"

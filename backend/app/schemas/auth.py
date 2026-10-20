@@ -50,6 +50,7 @@ class PublicUser(BaseModel):
 
 class LoginResponse(BaseModel):
     token: str
+    id: str
     role: Literal["admin", "worker"]
     name: str
     worker_id: str | None
@@ -87,3 +88,44 @@ class CreateAdminRequest(BaseModel):
         if len(value) < 3:
             raise ValueError("Username must contain at least 3 characters")
         return value
+
+
+class CreateManagedUserRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=160)
+    username: str = Field(min_length=3, max_length=80)
+    email: EmailStr
+    password: str = Field(min_length=12, max_length=256)
+    role: Literal["admin", "worker"]
+    city: str | None = Field(default=None, max_length=80)
+
+    @field_validator("name")
+    @classmethod
+    def normalize_managed_name(cls, value: str) -> str:
+        value = " ".join(value.split())
+        if not value:
+            raise ValueError("Name cannot be blank")
+        return value
+
+    @field_validator("username")
+    @classmethod
+    def normalize_managed_username(cls, value: str) -> str:
+        value = value.strip().lower()
+        if len(value) < 3:
+            raise ValueError("Username must contain at least 3 characters")
+        if not all(char.isalnum() or char in "._-" for char in value):
+            raise ValueError("Username can contain letters, numbers, periods, underscores, and hyphens")
+        return value
+
+    @field_validator("email")
+    @classmethod
+    def normalize_managed_email(cls, value: str) -> str:
+        return value.strip().lower()
+
+    @field_validator("city")
+    @classmethod
+    def normalize_managed_city(cls, value: str | None) -> str | None:
+        return " ".join(value.split()).lower() or None if value is not None else None
+
+
+class UserActiveRequest(BaseModel):
+    is_active: bool

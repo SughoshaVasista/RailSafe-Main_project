@@ -60,11 +60,18 @@ export const getDeviceSensors = (id, params = {}) => get(`/devices/${id}/sensors
 export const getDeviceDiagnostics = (id) => get(`/devices/${id}/diagnostics`)
 export const getTasks = (params = {}) => get('/tasks', params)
 export const createTask = (body) => post('/tasks', body)
+export const assignTask = (id, body) => post(`/tasks/${encodeURIComponent(id)}/assignment`, body)
+export const unassignTask = (id) => api.delete(`/tasks/${encodeURIComponent(id)}/assignment`).then(({ data }) => data)
 export const getWorkers = () => get('/workers')
 export const getPendingUsers = () => get('/users/pending')
+export const getManagedUsers = () => get('/users')
+export const createManagedUser = (body) => post('/users', body)
+export const setManagedUserActive = (id, isActive) => api.patch(`/users/${encodeURIComponent(id)}/status`, { is_active: isActive }).then(({ data }) => data)
 export const approveUser = (id) => post(`/users/${encodeURIComponent(id)}/approve`)
 export const rejectUser = (id) => post(`/users/${encodeURIComponent(id)}/reject`)
 export const updateTaskStatus = (id, body) => api.put(`/tasks/${id}/status`, body).then(({ data }) => data)
+export const submitTaskForReview = (id, body = {}) => post(`/tasks/${encodeURIComponent(id)}/submit`, body)
+export const reviewTask = (id, body) => post(`/tasks/${encodeURIComponent(id)}/review`, body)
 export const uploadTaskEvidence = (id, body) => api.post(`/tasks/${encodeURIComponent(id)}/evidence`, body).then(({ data }) => data)
 export const getTaskEvidenceImage = (url) => {
   const path = url.startsWith('/api/') ? url.slice(4) : url

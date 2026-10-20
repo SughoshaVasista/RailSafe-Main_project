@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str = ""
     jwt_access_token_minutes: int = 60
     ml_ingest_token: str = ""
+    sensor_ingest_token: str = ""
     database_url: str = f"sqlite:///{(BACKEND_DIR / 'instance' / 'amrin.db').as_posix()}"
     cors_origins: str = (
         "http://localhost:5173,http://127.0.0.1:5173,"

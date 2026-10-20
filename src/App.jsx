@@ -12,7 +12,9 @@ import ProtectedRoute from './components/ProtectedRoute'
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { CityProvider } from './context/CityContext'
+import PublicLayout from './components/public/PublicLayout'
+import { PublicAbout, PublicContact, PublicHome, PublicHowItWorks, PublicTechnology } from './pages/PublicPages'
 
 export default function App() {
-  return <BrowserRouter><AuthProvider><ThemeProvider><CityProvider><Routes><Route path="/login" element={<Login />} /><Route path="/signup" element={<Signup />} /><Route path="/simulation" element={<SimulationStandalone />} /><Route element={<ProtectedRoute allowedRoles={['admin', 'worker']} />}><Route path="/*" element={<Shell />} /></Route><Route path="*" element={<Navigate to="/login" replace />} /></Routes></CityProvider></ThemeProvider></AuthProvider></BrowserRouter>
+  return <BrowserRouter><AuthProvider><ThemeProvider><CityProvider><Routes><Route element={<PublicLayout />}><Route path="/" element={<PublicHome />} /><Route path="/about" element={<PublicAbout />} /><Route path="/how-it-works" element={<PublicHowItWorks />} /><Route path="/technology" element={<PublicTechnology />} /><Route path="/contact" element={<PublicContact />} /></Route><Route path="/login" element={<Login />} /><Route path="/signup" element={<Signup />} /><Route path="/simulation/simulator" element={<ProtectedRoute allowedRoles={['admin']}><SimulationStandalone /></ProtectedRoute>} /><Route path="/simulator" element={<Navigate to="/simulation/simulator" replace />} /><Route path="/simulation" element={<Navigate to="/simulation/simulator" replace />} /><Route element={<ProtectedRoute allowedRoles={['admin', 'worker']} />}><Route path="/*" element={<Shell />} /></Route><Route path="*" element={<Navigate to="/login" replace />} /></Routes></CityProvider></ThemeProvider></AuthProvider></BrowserRouter>
 }

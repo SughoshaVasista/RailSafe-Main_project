@@ -48,7 +48,7 @@ def create_app(settings: Settings | Mapping[str, Any] | None = None) -> FastAPI:
         allow_origins=resolved_settings.cors_origin_list,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "X-ML-API-Key"],
+        allow_headers=["Authorization", "Content-Type", "X-ML-API-Key", "X-Sensor-API-Key"],
     )
 
     @application.middleware("http")

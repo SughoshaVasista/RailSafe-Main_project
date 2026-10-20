@@ -21,14 +21,14 @@
 }
 
 :root[data-theme='dark'] {
-  --bg: #0F1113;
-  --surface: #16191C;
-  --surface-2: #1D2125;
-  --border: #2A2F35;
+  --bg: #17191B;
+  --surface: #1D2023;
+  --surface-2: #25292D;
+  --border: #343A40;
   --text: #E8EAEC;
-  --muted: #8A9199;
+  --muted: #A0A6AD;
   --ink: #E8EAEC;
-  --ink-text: #0F1113;
+  --ink-text: #17191B;
   --signal-s1-text: #5AA9E6;
   --signal-s2-text: #F2A93B;
   --signal-s3-text: #D62839;

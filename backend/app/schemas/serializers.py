@@ -162,6 +162,21 @@ def serialize_task_evidence(evidence: TaskEvidence) -> dict[str, Any]:
 def serialize_task(task: MaintenanceTask) -> dict[str, Any]:
     alert = task.alert
     worker = task.assigned_worker
+    review_actions = {
+        "maintenance_task_submitted_for_review",
+        "maintenance_task_approved",
+        "maintenance_task_changes_requested",
+    }
+    review_history = [
+        {
+            "action": entry.action,
+            "actor": entry.actor.name if entry.actor else "OFFICIAL",
+            "notes": entry.notes,
+            "timestamp": _iso(entry.timestamp),
+        }
+        for entry in alert.history
+        if entry.action in review_actions and (entry.changes or {}).get("task_id") == task.id
+    ]
     gps = dict(alert.gps_metadata or {})
     if alert.latitude is not None:
         gps["lat"] = alert.latitude
@@ -170,8 +185,13 @@ def serialize_task(task: MaintenanceTask) -> dict[str, Any]:
     return {
         "id": task.id,
         "alert_id": task.alert_id,
-        "worker_id": worker.worker_id,
+        "worker_id": worker.worker_id if worker else None,
+        "worker": {"id": worker.id, "worker_id": worker.worker_id, "name": worker.name, "email": worker.email, "city": worker.city} if worker else None,
         "status": task.status,
+        "review_status": task.review_status,
+        "review_notes": task.review_notes,
+        "review_requested_at": _iso(task.review_requested_at),
+        "review_history": review_history,
         "priority": task.priority or alert.severity,
         "severity": alert.severity,
         "defect": alert.defect,
@@ -184,7 +204,7 @@ def serialize_task(task: MaintenanceTask) -> dict[str, Any]:
         "sensors": alert.sensors,
         "notes": task.admin_notes,
         "admin_notes": task.admin_notes,
-        "city": alert.city or worker.city,
+        "city": alert.city or (worker.city if worker else None),
         "source": task.source,
         "created_at": _iso(task.created_at),
         "updated_at": _iso(task.updated_at),

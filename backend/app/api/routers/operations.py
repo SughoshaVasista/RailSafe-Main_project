@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile, 
 from fastapi.responses import FileResponse
 from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.db.session import get_db
 from app.errors import AppError
@@ -16,6 +16,7 @@ from app.schemas.operations import (
     AlertPriorityRequest,
     AssignAlertRequest,
     CreateTaskRequest,
+    TaskReviewRequest,
     TaskStatusRequest,
 )
 from app.schemas.serializers import serialize_alert, serialize_alert_history, serialize_task, serialize_task_evidence
@@ -40,7 +41,8 @@ ALERT_TRANSITIONS = {
 TASK_TRANSITIONS = {
     "ASSIGNED": {"ACCEPTED"},
     "ACCEPTED": {"IN_PROGRESS"},
-    "IN_PROGRESS": {"COMPLETED"},
+    "IN_PROGRESS": {"AWAITING_REVIEW"},
+    "AWAITING_REVIEW": set(),
     "COMPLETED": set(),
 }
 IMAGE_TYPES = {
@@ -75,7 +77,11 @@ def _get_alert(db: Session, alert_id: str, user: User | None = None) -> Alert:
 def _get_task(db: Session, task_id: str) -> MaintenanceTask:
     task = db.scalar(
         select(MaintenanceTask)
-        .options(joinedload(MaintenanceTask.alert), joinedload(MaintenanceTask.assigned_worker), joinedload(MaintenanceTask.evidence))
+        .options(
+            selectinload(MaintenanceTask.alert).selectinload(Alert.history).joinedload(AlertHistory.actor),
+            joinedload(MaintenanceTask.assigned_worker),
+            joinedload(MaintenanceTask.evidence),
+        )
         .where(MaintenanceTask.id == task_id)
     )
     if task is None:
@@ -147,6 +153,13 @@ def _commit_or_conflict(db: Session, message: str) -> None:
     except IntegrityError as exc:
         db.rollback()
         raise AppError(409, "operation_conflict", message) from exc
+
+
+def _has_current_repair_evidence(task: MaintenanceTask) -> bool:
+    repair_evidence = [item for item in task.evidence if item.evidence_type in {"repair", "after"}]
+    if task.review_status == "REWORK" and task.review_requested_at is not None:
+        return any(item.created_at > task.review_requested_at for item in repair_evidence)
+    return bool(repair_evidence)
 
 
 @router.get("/alerts")
@@ -322,7 +335,7 @@ def list_tasks(
     db: Session = Depends(get_db),
 ) -> dict[str, list[dict]]:
     statement = select(MaintenanceTask).options(
-        joinedload(MaintenanceTask.alert),
+        selectinload(MaintenanceTask.alert).selectinload(Alert.history).joinedload(AlertHistory.actor),
         joinedload(MaintenanceTask.assigned_worker),
         joinedload(MaintenanceTask.evidence),
     )
@@ -385,6 +398,88 @@ def create_task(
     return serialize_task(_get_task(db, task.id))
 
 
+@router.post("/tasks/{task_id}/assignment")
+def assign_existing_task(
+    task_id: str,
+    body: AssignAlertRequest,
+    actor: User = Depends(admin_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    task = _get_task(db, task_id)
+    if task.status != "ASSIGNED":
+        raise AppError(409, "task_already_started", "Only tasks that have not been accepted can be reassigned")
+    worker = _resolve_worker(db, body.worker_id)
+    previous_worker_id = task.assigned_worker_user_id
+    previous_alert_status = task.alert.status
+    task.assigned_worker = worker
+    task.updated_at = utc_now()
+    task.alert.assigned_worker = worker
+    if task.alert.status == "ACKNOWLEDGED":
+        task.alert.status = "ASSIGNED"
+    task.alert.updated_at = utc_now()
+    db.add(AlertHistory(
+        alert_id=task.alert_id,
+        actor_user_id=actor.id,
+        action="maintenance_task_reassigned",
+        old_status=previous_alert_status,
+        new_status=task.alert.status,
+        changes={"task_id": task.id, "assigned_worker_user_id": {"old": previous_worker_id, "new": worker.id}, "worker_id": worker.worker_id},
+        notes=body.notes,
+        source="api",
+    ))
+    db.add(EventLog(
+        actor_user_id=actor.id,
+        action="maintenance_task_reassigned",
+        object_type="task",
+        object_id=task.id,
+        summary=f"Task {task.id} assigned to {worker.worker_id}",
+        details={"previous_worker_user_id": previous_worker_id, "worker_user_id": worker.id, "alert_id": task.alert_id},
+        source="api",
+    ))
+    _commit_or_conflict(db, "Task assignment could not be saved")
+    return serialize_task(_get_task(db, task.id))
+
+
+@router.delete("/tasks/{task_id}/assignment")
+def unassign_task(
+    task_id: str,
+    actor: User = Depends(admin_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    task = _get_task(db, task_id)
+    if task.status != "ASSIGNED":
+        raise AppError(409, "task_already_started", "Only tasks that have not been accepted can be unassigned")
+    if task.assigned_worker_user_id is None:
+        return serialize_task(task)
+    previous_worker_id = task.assigned_worker_user_id
+    task.assigned_worker = None
+    task.updated_at = utc_now()
+    task.alert.assigned_worker = None
+    if task.alert.status == "ASSIGNED":
+        task.alert.status = "ACKNOWLEDGED"
+    task.alert.updated_at = utc_now()
+    db.add(AlertHistory(
+        alert_id=task.alert_id,
+        actor_user_id=actor.id,
+        action="maintenance_task_unassigned",
+        old_status="ASSIGNED",
+        new_status=task.alert.status,
+        changes={"task_id": task.id, "assigned_worker_user_id": {"old": previous_worker_id, "new": None}},
+        source="api",
+    ))
+    db.add(EventLog(
+        actor_user_id=actor.id,
+        action="maintenance_task_unassigned",
+        object_type="task",
+        object_id=task.id,
+        summary=f"Task {task.id} unassigned",
+        details={"previous_worker_user_id": previous_worker_id, "alert_id": task.alert_id},
+        source="api",
+    ))
+    _commit_or_conflict(db, "Task could not be unassigned")
+    return serialize_task(_get_task(db, task.id))
+
+
 @router.put("/tasks/{task_id}/status")
 def update_task_status(
     task_id: str,
@@ -394,6 +489,8 @@ def update_task_status(
 ) -> dict:
     task = _get_task(db, task_id)
     _visible_task(task, actor)
+    if body.status == "COMPLETED":
+        raise AppError(409, "admin_review_required", "A task can only be completed after an administrator approves it")
     if body.status not in TASK_TRANSITIONS.get(task.status, set()):
         raise AppError(
             409,
@@ -401,14 +498,11 @@ def update_task_status(
             f"Task cannot move from {task.status} to {body.status}",
             {"current_status": task.status, "requested_status": body.status},
         )
-    if body.status == "COMPLETED" and not any(item.evidence_type == "repair" for item in task.evidence):
-        raise AppError(409, "repair_evidence_required", "Upload repair evidence before completing this task")
-
     old_task_status = task.status
     task.status = body.status
     task.updated_at = utc_now()
     previous_alert_status = task.alert.status
-    next_alert_status = "UNDER_REPAIR" if body.status == "IN_PROGRESS" else "RESOLVED" if body.status == "COMPLETED" else None
+    next_alert_status = "UNDER_REPAIR" if body.status == "IN_PROGRESS" else None
     if next_alert_status and task.alert.status != next_alert_status:
         _ensure_transition(task.alert, next_alert_status)
         _audit_alert_change(
@@ -437,6 +531,107 @@ def update_task_status(
         source="api",
     ))
     _commit_or_conflict(db, "Task status conflicts with current alert state")
+    return serialize_task(_get_task(db, task_id))
+
+
+@router.post("/tasks/{task_id}/submit")
+def submit_task_for_review(
+    task_id: str,
+    body: ActionNotes | None = None,
+    actor: User = Depends(any_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    task = _get_task(db, task_id)
+    _visible_task(task, actor)
+    if actor.role != "worker":
+        raise AppError(403, "worker_action_required", "Only the assigned worker can submit work for review")
+    if task.status != "IN_PROGRESS":
+        raise AppError(409, "invalid_task_transition", "Only in-progress work can be submitted for review")
+    if not _has_current_repair_evidence(task):
+        raise AppError(409, "repair_evidence_required", "Upload a repair or after photo before requesting review")
+
+    task.status = "AWAITING_REVIEW"
+    task.review_status = "PENDING"
+    task.review_notes = None
+    task.review_requested_at = None
+    task.updated_at = utc_now()
+    task.alert.updated_at = utc_now()
+    db.add(AlertHistory(
+        alert_id=task.alert_id,
+        actor_user_id=actor.id,
+        action="maintenance_task_submitted_for_review",
+        old_status=task.alert.status,
+        new_status=task.alert.status,
+        changes={"task_id": task.id, "task_status": {"old": "IN_PROGRESS", "new": "AWAITING_REVIEW"}},
+        notes=body.notes if body else None,
+        source="api",
+    ))
+    db.add(EventLog(
+        actor_user_id=actor.id,
+        action="maintenance_task_submitted_for_review",
+        object_type="task",
+        object_id=task.id,
+        summary=f"Task {task.id} submitted for official review",
+        details={"alert_id": task.alert_id, "worker_user_id": actor.id},
+        source="api",
+    ))
+    _commit_or_conflict(db, "Task could not be submitted for review")
+    return serialize_task(_get_task(db, task_id))
+
+
+@router.post("/tasks/{task_id}/review")
+def review_task(
+    task_id: str,
+    body: TaskReviewRequest,
+    actor: User = Depends(admin_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    task = _get_task(db, task_id)
+    if task.status != "AWAITING_REVIEW":
+        raise AppError(409, "task_not_awaiting_review", "Only submitted tasks can be reviewed")
+    notes = (body.notes or "").strip()
+    if body.decision == "request_changes" and not notes:
+        raise AppError(422, "review_notes_required", "Add instructions describing the work still needed")
+
+    previous_alert_status = task.alert.status
+    old_status = task.status
+    if body.decision == "approve":
+        if not _has_current_repair_evidence(task):
+            raise AppError(409, "repair_evidence_required", "Repair evidence is required before approval")
+        _ensure_transition(task.alert, "RESOLVED")
+        task.status = "COMPLETED"
+        task.review_status = "APPROVED"
+        action = "maintenance_task_approved"
+        task.alert.status = "RESOLVED"
+    else:
+        task.status = "IN_PROGRESS"
+        task.review_status = "REWORK"
+        task.review_notes = notes
+        task.review_requested_at = utc_now()
+        action = "maintenance_task_changes_requested"
+
+    task.updated_at = utc_now()
+    task.alert.updated_at = utc_now()
+    db.add(AlertHistory(
+        alert_id=task.alert_id,
+        actor_user_id=actor.id,
+        action=action,
+        old_status=previous_alert_status,
+        new_status=task.alert.status,
+        changes={"task_id": task.id, "task_status": {"old": old_status, "new": task.status}, "review_status": task.review_status},
+        notes=notes or None,
+        source="api",
+    ))
+    db.add(EventLog(
+        actor_user_id=actor.id,
+        action=action,
+        object_type="task",
+        object_id=task.id,
+        summary=f"Task {task.id} {'approved as finished' if body.decision == 'approve' else 'returned for more work'}",
+        details={"alert_id": task.alert_id, "worker_user_id": task.assigned_worker_user_id, "task_status": task.status, "review_status": task.review_status},
+        source="api",
+    ))
+    _commit_or_conflict(db, "Task review could not be saved")
     return serialize_task(_get_task(db, task_id))
 
 

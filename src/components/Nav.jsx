@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { AlertTriangle, Bot, ChevronsLeft, ChevronsRight, Cpu, LayoutDashboard, ListTodo, Map, Settings, X } from 'lucide-react'
+import { AlertTriangle, Bot, ChevronsLeft, ChevronsRight, Cpu, LayoutDashboard, ListTodo, Map, Settings, UsersRound, X } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
-const groups = [{ title: 'Operations', items: [['/admin', 'Command Center', LayoutDashboard], ['/map', 'Live Map', Map], ['/alerts', 'Alerts', AlertTriangle], ['/tasks', 'Tasks', ListTodo]] }, { title: 'Inspection', items: [['/ai-detection', 'AI Detection', Bot]] }, { title: 'Maintenance', items: [['/hardware', 'Hardware', Cpu]] }]
+const groups = [{ title: 'Operations', items: [['/admin', 'Command Center', LayoutDashboard], ['/map', 'Live Map', Map], ['/alerts', 'Alerts', AlertTriangle], ['/tasks', 'Tasks', ListTodo]] }, { title: 'Inspection', items: [['/ai-detection', 'AI Detection', Bot]] }, { title: 'Maintenance', items: [['/hardware', 'Hardware', Cpu]] }, { title: 'Administration', items: [['/users', 'Manage Users', UsersRound]] }]
 
 const mobileItems = [['/admin', 'Command Center', LayoutDashboard], ['/map', 'Map', Map], ['/alerts', 'Alerts', AlertTriangle], ['/tasks', 'Tasks', ListTodo]]
-const moreItems = [['/simulation', 'Simulation', Settings], ['/settings', 'Settings', Settings]]
+const moreItems = [['/users', 'Manage Users', UsersRound], ['/settings', 'Settings', Settings]]
 
 function LinkItem({ to, label, Icon, onClick }) {
   return <NavLink to={to} onClick={onClick} className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}><Icon size={18} /><span>{label}</span></NavLink>

@@ -1,8 +1,9 @@
+import hmac
 from datetime import datetime, timedelta, timezone
 from typing import Any
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, Query, Request
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
@@ -32,7 +33,7 @@ from app.schemas.serializers import (
     serialize_track,
     serialize_train,
 )
-from app.schemas.telemetry import SwitchDecisionRequest
+from app.schemas.telemetry import DeviceRegistration, SensorReadingsBatch, SwitchDecisionRequest
 from app.security.dependencies import require_roles
 
 router = APIRouter(prefix="/api", tags=["telemetry and dashboard"])
@@ -42,6 +43,77 @@ device_user = require_roles("admin")
 dashboard_user = require_roles("admin")
 WINDOWS = {"1h": timedelta(hours=1), "6h": timedelta(hours=6), "24h": timedelta(hours=24), "7d": timedelta(days=7), "30d": timedelta(days=30)}
 ACTIVE_ALERT_STATES = ("ACTIVE", "DETECTED", "VERIFIED", "ACKNOWLEDGED", "ASSIGNED", "UNDER_REPAIR", "REOPENED")
+
+
+@router.post("/integrations/sensors/readings", status_code=201)
+def ingest_sensor_readings(
+    payload: SensorReadingsBatch,
+    request: Request,
+    x_sensor_api_key: str | None = Header(default=None, alias="X-Sensor-API-Key"),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    configured_token = request.app.state.settings.sensor_ingest_token
+    if not configured_token:
+        raise AppError(503, "sensor_ingestion_not_configured", "Sensor ingestion is disabled until SENSOR_INGEST_TOKEN is configured")
+    if not x_sensor_api_key or not hmac.compare_digest(x_sensor_api_key, configured_token):
+        raise AppError(401, "invalid_sensor_api_key", "A valid sensor API key is required")
+    device = db.get(Device, payload.device_id)
+    if device is None:
+        raise AppError(422, "unknown_device", "device_id must refer to a registered device")
+
+    now = utc_now()
+    rows = []
+    for item in payload.readings:
+        recorded_at = item.recorded_at or now
+        if recorded_at.tzinfo is None:
+            recorded_at = recorded_at.replace(tzinfo=timezone.utc)
+        recorded_at = recorded_at.astimezone(timezone.utc)
+        if recorded_at > now + timedelta(minutes=1):
+            raise AppError(422, "invalid_sensor_timestamp", "Sensor timestamps cannot be more than one minute in the future")
+        value = item.value
+        numeric_value = float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+        text_value = value if isinstance(value, str) else None
+        structured_value = value if isinstance(value, (dict, list, bool)) or value is None else None
+        rows.append(SensorReading(
+            device_id=device.id,
+            name=item.name.strip(),
+            status=item.status.upper(),
+            numeric_value=numeric_value,
+            text_value=text_value,
+            structured_value=structured_value,
+            unit=item.unit,
+            interpreted_value=item.interpreted_value,
+            latitude=item.latitude,
+            longitude=item.longitude,
+            source="raspberry_pi",
+            recorded_at=recorded_at,
+        ))
+    device.status = "ONLINE"
+    device.pi_status = "ONLINE"
+    device.network_status = "ONLINE"
+    device.source = "raspberry_pi"
+    db.add_all(rows)
+    db.commit()
+    return {"device_id": device.id, "accepted": len(rows), "latest_recorded_at": max(row.recorded_at for row in rows).isoformat()}
+
+
+@router.post("/devices", status_code=201)
+def register_device(
+    payload: DeviceRegistration,
+    _user: User = Depends(admin_user),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    device_id = payload.id.strip()
+    name = payload.name.strip()
+    if not device_id or not name:
+        raise AppError(422, "invalid_device", "Device ID and name cannot be blank")
+    if db.get(Device, device_id) is not None:
+        raise AppError(409, "device_already_registered", "A device with this ID is already registered")
+    device = Device(id=device_id, name=name, platform=payload.platform, city=payload.city, status="UNKNOWN", source="raspberry_pi")
+    db.add(device)
+    db.commit()
+    db.refresh(device)
+    return serialize_device(device)
 
 
 @router.get("/devices")
