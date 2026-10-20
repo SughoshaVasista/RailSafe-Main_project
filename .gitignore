@@ -27,3 +27,19 @@ __pycache__/
 *.njsproj
 *.sln
 *.sw?
+
+# AMRIN FastAPI backend
+/backend/.venv/
+/backend/venv/
+/backend/.env
+/backend/instance/*.db
+/backend/instance/*.sqlite
+/backend/instance/*.sqlite3
+/backend/uploads/**
+!/backend/uploads/.gitkeep
+!/backend/uploads/evidence/
+!/backend/uploads/evidence/.gitkeep
+/backend/.pytest_cache/
+/backend/.coverage
+/backend/htmlcov/
+/backend/test-results/

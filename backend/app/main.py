@@ -1,0 +1,92 @@
+import logging
+from collections.abc import Mapping
+from typing import Any
+
+from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.cors import CORSMiddleware
+
+from app.config import Settings
+from app.db.session import build_engine, build_session_factory, get_db
+from app.errors import AppError
+from app.logging_config import configure_logging
+
+logger = logging.getLogger("amrin.api")
+
+
+def create_app(settings: Settings | Mapping[str, Any] | None = None) -> FastAPI:
+    """Build a configured AMRIN API app, optionally with isolated test settings."""
+    configure_logging()
+    if settings is None:
+        resolved_settings = Settings()
+    elif isinstance(settings, Settings):
+        resolved_settings = settings
+    else:
+        resolved_settings = Settings(**settings)
+
+    application = FastAPI(title="AMRIN API", version="0.1.0")
+    application.state.settings = resolved_settings
+    application.state.engine = build_engine(resolved_settings.database_url)
+    application.state.session_factory = build_session_factory(application.state.engine)
+
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=resolved_settings.cors_origin_list,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type", "X-ML-API-Key"],
+    )
+
+    @application.get("/api/health", tags=["health"])
+    def health() -> dict[str, str]:
+        return {"status": "ok"}
+
+    @application.exception_handler(AppError)
+    async def app_error_handler(_request: Request, exc: AppError) -> JSONResponse:
+        error: dict[str, Any] = {"code": exc.code, "message": exc.message}
+        if exc.details is not None:
+            error["details"] = exc.details
+        return JSONResponse(status_code=exc.status_code, content={"error": error})
+
+    @application.exception_handler(StarletteHTTPException)
+    async def http_error_handler(_request: Request, exc: StarletteHTTPException) -> JSONResponse:
+        message = exc.detail if isinstance(exc.detail, str) else "Request failed"
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"error": {"code": f"http_{exc.status_code}", "message": message}},
+            headers=exc.headers,
+        )
+
+    @application.exception_handler(RequestValidationError)
+    async def validation_error_handler(_request: Request, exc: RequestValidationError) -> JSONResponse:
+        return JSONResponse(
+            status_code=422,
+            content={
+                "error": {
+                    "code": "validation_error",
+                    "message": "Request validation failed",
+                    "details": jsonable_encoder(exc.errors()),
+                }
+            },
+        )
+
+    @application.exception_handler(Exception)
+    async def unhandled_error_handler(_request: Request, exc: Exception) -> JSONResponse:
+        logger.exception("Unhandled API error", exc_info=exc)
+        message = "Internal server error"
+        if resolved_settings.environment.lower() not in {"production", "prod"}:
+            message = str(exc) or message
+        return JSONResponse(
+            status_code=500,
+            content={"error": {"code": "internal_server_error", "message": message}},
+        )
+
+    return application
+
+
+app = create_app()
+
+__all__ = ["app", "create_app", "get_db"]

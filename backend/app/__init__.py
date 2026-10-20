@@ -1,0 +1,1 @@
+"""AMRIN backend application package."""
