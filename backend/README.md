@@ -23,9 +23,9 @@ python -m app.cli seed-demo
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-`create-admin` prompts for a name, email, username, and password. The password is entered with hidden terminal input and is never printed. It refuses to create an account if any administrator already exists. Do not use the seeded worker as a login account; it intentionally has no password hash.
+`create-admin` prompts for a name, email, username, and password. The password is entered with hidden terminal input and is never printed. It refuses to create an account if any administrator already exists. Do not use the seeded worker as a login account; it intentionally has no password hash. `seed-demo` is idempotent: a second run inserts no duplicate sample records.
 
-The API listens on `http://127.0.0.1:8000`; health is available at `/api/health`. SQLite is the persistent local default under `backend/instance/`. `DATABASE_URL` can use a PostgreSQL SQLAlchemy URL later. `JWT_ACCESS_TOKEN_MINUTES`, `CORS_ORIGINS`, `UPLOAD_FOLDER`, `MAX_CONTENT_LENGTH`, and `ENVIRONMENT` are configurable through `backend/.env` or process environment.
+The API listens on `http://127.0.0.1:8000`; health is available at `/api/health`. SQLite is the persistent local default under `backend/instance/`. `DATABASE_URL` can use a PostgreSQL SQLAlchemy URL when the matching driver is installed. `JWT_ACCESS_TOKEN_MINUTES`, `CORS_ORIGINS`, `UPLOAD_FOLDER`, `MAX_CONTENT_LENGTH`, `ENVIRONMENT`, and `ML_INGEST_TOKEN` are configurable through `backend/.env` or process environment.
 
 ## Authentication behavior
 
@@ -46,6 +46,8 @@ Evidence accepts JPEG, PNG, GIF, and WebP only. The upload is bounded by `MAX_CO
 
 Device, sensor, diagnostics, track, train, switch status, dashboard summary/event log, model status, and AI detection routes use database records. Sensor history is bounded to the most recent 1,000 rows and accepts `1h`, `6h`, `24h`, `7d`, and `30d` windows. Map routes are available to approved admins/workers; device/model/dashboard administration reads are admin-only. The model and detection endpoints report no live ML service until an actual integration reports data. Switch decisions are advisory simulation records only and never operate railway equipment. To let `train-sim/controller.py` submit a decision, set `AMRIN_API_TOKEN` in that process to an administrator's Bearer token; it is never put in a URL or checked into source.
 
+The optional `POST /api/integrations/ml/events` endpoint accepts version 1 events from a separate ML service. Set a private `ML_INGEST_TOKEN` in `backend/.env` to enable it; it uses `X-ML-API-Key` and is independent from user JWT authentication. Ingestion is disabled when the token is missing, validates registered devices and bounded payloads, rejects image URLs/base64, and atomically records an alert, ML-origin event, and audit entries. It does not load a model or send device commands. See [`docs/ml-integration-contract.md`](../docs/ml-integration-contract.md) for payload and retry behavior.
+
 ## Tests
 
 ```powershell
@@ -53,4 +55,6 @@ Set-Location .\backend
 python -m pytest
 ```
 
-The test suite uses isolated temporary SQLite databases. Run the existing frontend production build from the repository root with `npm run build`.
+The test suite uses isolated temporary SQLite databases. Run frontend checks from the repository root with `npm test` and `npm run build`.
+
+For a safe manual local reset, stop Uvicorn first, make a backup if needed, then remove only `backend/instance/amrin.db` and its SQLite journal files from that directory. Re-run `alembic upgrade head`, create the first admin, and optionally run `python -m app.cli seed-demo`. Uploaded evidence is stored separately under `UPLOAD_FOLDER` and is not removed by a database reset.

@@ -30,7 +30,7 @@ def ingest_event(
     if not x_ml_api_key or not hmac.compare_digest(x_ml_api_key, configured_token):
         raise AppError(401, "invalid_ml_api_key", "A valid ML API key is required")
 
-    namespace = f"{payload.source}:{payload.device_id}"
+    namespace = hashlib.sha256(f"{payload.source}:{payload.device_id}".encode()).hexdigest()
     existing = db.scalar(select(MlOriginEvent).where(
         MlOriginEvent.source_namespace == namespace,
         MlOriginEvent.source_event_id == payload.source_event_id,

@@ -6,6 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import SQLAlchemyError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
 
@@ -69,7 +70,15 @@ def create_app(settings: Settings | Mapping[str, Any] | None = None) -> FastAPI:
         return await call_next(request)
 
     @application.get("/api/health", tags=["health"])
-    def health() -> dict[str, str]:
+    def health():
+        try:
+            with application.state.engine.connect() as connection:
+                connection.exec_driver_sql("SELECT 1 FROM users LIMIT 1")
+        except SQLAlchemyError:
+            return JSONResponse(
+                status_code=503,
+                content={"status": "unavailable", "database": "unavailable"},
+            )
         return {"status": "ok"}
 
     @application.exception_handler(AppError)

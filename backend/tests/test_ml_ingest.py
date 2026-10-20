@@ -1,4 +1,3 @@
-from datetime import datetime
 from fastapi.testclient import TestClient
 from sqlalchemy import event, func, select
 from sqlalchemy.orm import Session
@@ -72,7 +71,7 @@ def test_ingest_is_authenticated_atomic_and_idempotent(tmp_path):
         assert session.scalar(select(func.count(EventLog.id)).where(EventLog.source == "ml_backend")) == 1
         event = session.scalar(select(MlOriginEvent))
         assert event.payload["detection"]["boxes"]
-        assert event.detected_at.tzinfo is not None or isinstance(event.detected_at, datetime)
+        assert event.detected_at.isoformat().startswith("2026-10-20T10:30:00")
     app.state.engine.dispose()
 
 
@@ -83,6 +82,7 @@ def test_ingest_rejects_invalid_payload_and_external_image_urls(tmp_path):
         assert client.post("/api/integrations/ml/events", json=payload(confidence=1.5), headers=headers).status_code == 422
         assert client.post("/api/integrations/ml/events", json=payload(detected_at="yesterday"), headers=headers).status_code == 422
         assert client.post("/api/integrations/ml/events", json=payload(image_url="https://example.invalid/frame.png"), headers=headers).status_code == 422
+        assert client.post("/api/integrations/ml/events", json=payload(evidence_image_base64="dGVzdA=="), headers=headers).status_code == 422
         assert client.post("/api/integrations/ml/events", json=payload(device_id="missing"), headers=headers).status_code == 422
     app.state.engine.dispose()
 

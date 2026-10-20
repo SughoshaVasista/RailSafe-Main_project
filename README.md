@@ -1,36 +1,56 @@
 # AMRIN
 
-React/Vite operations console for railway condition monitoring, inspection, maintenance, and decision support.
+AMRIN is a React/Vite railway condition monitoring and maintenance console. The FastAPI backend provides persistent local development data, authentication, alerts, maintenance workflows, telemetry, and a protected future ML event ingestion contract. It does not control railway signalling or hardware.
 
-## Setup
+## Windows development
+
+Use two PowerShell terminals from the repository root. Keep local `.env` files private; do not overwrite an existing one.
+
+### Terminal 1 — FastAPI backend
 
 ```powershell
+Set-Location .\backend
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+# Edit backend\.env and set a private JWT_SECRET_KEY before enabling authentication.
+alembic upgrade head
+python -m app.cli create-admin
+python -m app.cli seed-demo
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+`create-admin` prompts for the first administrator; the password is hidden. Demo records use source `demo`. The seeded demo worker has no password. For the optional ML ingestion API, set a separate high-entropy `ML_INGEST_TOKEN` in `backend/.env`; see [the ML contract](docs/ml-integration-contract.md).
+
+### Terminal 2 — React/Vite frontend
+
+```powershell
+# Run these commands from the repository root.
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+# In root .env, set VITE_API_BASE_URL=http://localhost:8000/api and VITE_DEMO_AUTH=false.
 npm install
-Copy-Item .env.example .env
 npm run dev
 ```
 
-Run the development API separately with `python mock-server/server.py`. It listens on `http://localhost:8000`; demo credentials are `admin/admin` and `worker/worker`. The mock server includes a temporary in-memory demo database with seeded alerts, tracks, train telemetry, sensor readings, diagnostics, model status, and switch decisions. It resets when the server restarts and must not be used for railway operations.
+Restart Vite after changing `.env`. Keep `ML_INGEST_TOKEN`, JWT secrets, and all backend-only values out of root `.env` and every `VITE_` variable.
 
-## Environment
+## Local demo mode
 
-`.env.example` documents every client-side `VITE_` variable, including `VITE_DEMO_AUTH`, `VITE_DEMO_CITIES`, `VITE_ADMIN_INVITE`, `VITE_API_BASE_URL`, map coordinates, `VITE_MAPTILER_KEY`, and the seven `VITE_FIREBASE_*` settings. To use the real backend, set `VITE_API_BASE_URL` in `.env` to its `/api` URL and restart Vite. Axios attaches the persisted auth token; the backend must re-check role authorization on every endpoint.
+`mock-server/server.py` is a separate in-memory UI demo server. Run it instead of FastAPI when intentionally using the mock-data workflow and demo auth. Its seed resets on restart; it is not persistent or suitable for railway operations. `/simulation` is a standalone decision-support simulation and does not require a live ML service or railway connection.
 
-## Firebase rules
-
-`database.rules.json` permits public reads for the development listener and denies client writes. Production writes must go through the authenticated backend, which should deploy stricter rules and validate roles server-side.
-
-## Routes
-
-Admin routes include Command Center, Alerts, Live Map, Tasks, Hardware, and AI Detection. Workers can access Tasks and the Map only. `/simulation` is a public standalone decision-support simulator and never uses live endpoints.
-
-## Demo walkthrough
-
-With the mock server and Vite running, execute:
+## Tests and build
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts/demo-walkthrough.ps1
+Set-Location .\backend
+python -m pytest
+Set-Location ..
+npm test
+npm run build
 ```
 
-The script walks through hardware online, an S3 crack alert, switch recommendation, worker assignment, repair status transitions, evidence upload, and alert resolution.
-# AMRIN Frontend
+SQLite is the local persistent default in `backend/instance/`; set backend `DATABASE_URL` to a PostgreSQL SQLAlchemy URL to prepare a PostgreSQL deployment. Run Alembic migrations before starting the API. Never commit `.env`, databases, uploaded evidence, virtual environments, or generated build outputs.
+
+## Main routes
+
+The React app includes Command Center, Alerts, Live Map, Tasks, Hardware, and AI Detection. Access is role-gated by the API and UI. See [backend setup and API behavior](backend/README.md) and the [implementation handoff](docs/implementation-handoff.md).
